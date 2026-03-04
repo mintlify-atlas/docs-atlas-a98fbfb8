@@ -79,7 +79,9 @@
               "development/components/user-card",
               "development/components/repo-list",
               "development/components/commit-panel",
-              "development/components/language-chart"
+              "development/components/language-chart",
+              "development/components/token-modal",
+              "development/components/error-banner"
             ]
           },
           {

@@ -1,0 +1,118 @@
+---
+title: TokenModal component
+description: Modal dialog for managing GitHub Personal Access Token configuration
+---
+
+# TokenModal component
+
+The `TokenModal` component provides a secure interface for users to configure their GitHub Personal Access Token, which increases API rate limits from 60 to 5,000 requests per hour.
+
+## Location
+
+Appears as a modal overlay when users click the "Token API" button in the header or the "Add token" hint banner.
+
+## Props
+
+<ParamField path="token" type="string" required>
+  Current token value from localStorage
+</ParamField>
+
+<ParamField path="onSave" type="(token: string) => void" required>
+  Callback function to save or remove the token
+</ParamField>
+
+<ParamField path="onClose" type="() => void" required>
+  Callback function to close the modal
+</ParamField>
+
+## Features
+
+### Token input with visibility toggle
+
+```jsx
+const [show, setShow] = useState(false)
+
+<input
+  type={show ? 'text' : 'password'}
+  value={value}
+  onChange={e => setValue(e.target.value)}
+  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+/>
+<button onClick={() => setShow(s => !s)}>
+  {show ? <EyeOff size={15} /> : <Eye size={15} />}
+</button>
+```
+
+The token input masks the value by default but can be toggled to visible text using the eye icon button.
+
+### Rate limit information
+
+The modal displays a clear comparison of rate limits:
+- Without token: **60 req/hour**
+- With token: **5,000 req/hour**
+
+### Direct GitHub link
+
+```jsx
+<a
+  href="https://github.com/settings/tokens/new?scopes=read:user,public_repo"
+  target="_blank"
+  rel="noreferrer"
+>
+  Create token on GitHub (scope: public_repo + read:user)
+</a>
+```
+
+The link pre-fills the required OAuth scopes (`read:user`, `public_repo`) in GitHub's token creation form.
+
+## Usage from App.jsx
+
+```jsx
+const [showToken, setShowToken] = useState(false)
+const { token, saveToken } = useGitHub()
+
+<Header onTokenClick={() => setShowToken(true)} />
+
+{showToken && (
+  <TokenModal
+    token={token}
+    onSave={saveToken}
+    onClose={() => setShowToken(false)}
+  />
+)}
+```
+
+## Implementation details
+
+**Source**: `src/components/TokenModal.jsx`
+
+**State management**:
+- Local `value` state for the input field
+- Local `show` state for password visibility toggle
+- Trims whitespace on save
+
+**Actions**:
+- **Save**: Calls `onSave(value.trim())` and closes modal
+- **Clear**: Calls `onSave('')` to remove token from localStorage
+- **Cancel**: Closes modal without saving changes
+
+**Overlay click**: Clicking outside the modal content closes it
+
+```jsx
+<div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+```
+
+## Icons used
+
+From `lucide-react`:
+- `X` - Close button
+- `Key` - Token icon
+- `Eye` / `EyeOff` - Visibility toggle
+- `ExternalLink` - GitHub link indicator
+- `Info` - Information box icon
+
+## Security note
+
+<Warning>
+The token is stored in `localStorage` and only sent to `api.github.com` in the Authorization header. GitScope never transmits tokens to any other server.
+</Warning>

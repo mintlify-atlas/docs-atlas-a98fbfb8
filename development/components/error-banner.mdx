@@ -1,0 +1,124 @@
+---
+title: ErrorBanner component
+description: Dismissible error notification banner component
+---
+
+# ErrorBanner component
+
+The `ErrorBanner` component displays error messages to users in a prominent, dismissible banner at the top of the content area.
+
+## Location
+
+Appears below the search bar when errors occur during:
+- User searches (404 user not found)
+- API requests (403 rate limit exceeded)
+- Network failures
+- Repository or commit fetching errors
+
+## Props
+
+<ParamField path="message" type="string" required>
+  The error message text to display
+</ParamField>
+
+<ParamField path="onDismiss" type="() => void" required>
+  Callback function when user clicks the dismiss (X) button
+</ParamField>
+
+## Usage from App.jsx
+
+```jsx
+const [error, setError] = useState(null)
+
+{error && (
+  <ErrorBanner message={error} onDismiss={() => setError(null)} />
+)}
+```
+
+The error banner is conditionally rendered when the `error` state is not null. Dismissing the banner clears the error state.
+
+## Error messages from useGitHub hook
+
+The hook throws specific error messages for different HTTP status codes:
+
+```javascript
+// From src/hooks/useGitHub.js:34-42
+if (res.status === 403) {
+  const data = await res.json()
+  throw new Error(data.message || 'Rate limit exceeded')
+}
+if (res.status === 404) throw new Error('Usuario no encontrado')
+if (!res.ok) {
+  const data = await res.json()
+  throw new Error(data.message || `HTTP ${res.status}`)
+}
+```
+
+Common error messages:
+- "Usuario no encontrado" - 404 user doesn't exist
+- "Rate limit exceeded" or GitHub's rate limit message - 403 rate limited
+- Generic HTTP errors with status code
+
+## Implementation details
+
+**Source**: `src/components/ErrorBanner.jsx`
+
+**Structure**:
+```jsx
+<div className={`${styles.banner} fade-up`}>
+  <AlertTriangle size={16} />
+  <span>{message}</span>
+  <button className={styles.dismiss} onClick={onDismiss}>
+    <X size={14} />
+  </button>
+</div>
+```
+
+**Animation**: Uses the `fade-up` class for a smooth entrance animation
+
+**Icons**: 
+- `AlertTriangle` (16px) - Warning indicator
+- `X` (14px) - Dismiss button
+
+## Styling
+
+The banner is styled to stand out with:
+- Warning colors (typically orange/red background)
+- Prominent positioning at the top of the content area
+- Flexbox layout for icon, message, and dismiss button alignment
+- Hover state on dismiss button
+
+## Error handling workflow
+
+1. User performs an action (search, pagination, view commits)
+2. API request fails with an error
+3. Error is caught in try-catch and set to error state
+4. ErrorBanner renders with the error message
+5. User reads the error and clicks dismiss
+6. Error state is cleared, banner disappears
+
+Example from App.jsx search function:
+
+```jsx
+try {
+  const [userData, reposData] = await Promise.all([
+    getUser(username),
+    getRepos(username, 1, PER_PAGE),
+  ])
+  setUser(userData)
+  setRepos(reposData)
+} catch (e) {
+  setError(e.message)  // ErrorBanner will display this
+}
+```
+
+## Related components
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/development/error-handling">
+    Learn about error handling patterns in GitScope
+  </Card>
+  <Card title="useGitHub Hook" icon="code" href="/development/use-github-hook">
+    API hook that throws errors caught by ErrorBanner
+  </Card>
+</CardGroup>
