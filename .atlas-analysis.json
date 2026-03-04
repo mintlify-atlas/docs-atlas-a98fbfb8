@@ -1,0 +1,125 @@
+{
+  "projectType": "saas",
+  "projectName": "GitScope",
+  "projectDescription": "Real-time GitHub profile analytics dashboard for visualizing user repositories, commits, and language statistics",
+  "theme": "aspen",
+  "primaryColor": "#2DA44E",
+  "lightColor": "#57AB5A",
+  "darkColor": "#1F6FEB",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/user-search",
+              "features/repository-explorer",
+              "features/commit-history",
+              "features/language-analytics",
+              "features/dark-mode"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/api-token",
+              "configuration/rate-limits",
+              "configuration/themes"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/getting-started",
+              "guides/filtering-repos",
+              "guides/viewing-commits",
+              "guides/understanding-charts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/architecture",
+              "development/project-structure",
+              "development/tech-stack"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "development/components/header",
+              "development/components/search-bar",
+              "development/components/user-card",
+              "development/components/repo-list",
+              "development/components/commit-panel",
+              "development/components/language-chart"
+            ]
+          },
+          {
+            "group": "API Integration",
+            "pages": [
+              "development/github-api",
+              "development/use-github-hook",
+              "development/error-handling"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Deploy",
+            "pages": [
+              "deployment/github-pages",
+              "deployment/build-process",
+              "deployment/environment-setup"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Real-time GitHub user profile search and analytics",
+    "Repository explorer with filtering, sorting, and pagination",
+    "Commit history viewer for any repository",
+    "Language distribution visualization with interactive charts",
+    "API rate limit monitoring with visual indicators",
+    "GitHub Personal Access Token support (60 to 5,000 req/h)",
+    "Dark mode with localStorage persistence",
+    "Responsive design for mobile, tablet, and desktop",
+    "Error handling for rate limits and API failures"
+  ],
+  "publicApiSurface": [
+    "useGitHub.getUser(username)",
+    "useGitHub.getRepos(username, page, per_page)",
+    "useGitHub.getCommits(owner, repo, per_page)",
+    "useGitHub.getLanguages(owner, repo)",
+    "useGitHub.saveToken(token)",
+    "useGitHub.rateLimit",
+    "Header component",
+    "SearchBar component",
+    "UserCard component",
+    "RepoList component",
+    "CommitPanel component",
+    "LanguageChart component",
+    "TokenModal component",
+    "ErrorBanner component"
+  ]
+}
