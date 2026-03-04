@@ -1,0 +1,244 @@
+---
+title: 'Deploying to GitHub Pages'
+description: 'Deploy GitScope to GitHub Pages using manual or automated workflows'
+icon: 'github'
+---
+
+GitScope supports deployment to GitHub Pages using either a manual script or an automated CI/CD workflow. Both methods build the application using Vite and deploy the static assets to GitHub Pages.
+
+## Prerequisites
+
+Before deploying to GitHub Pages, ensure you have:
+
+- A GitHub repository for your project
+- GitHub Pages enabled in your repository settings
+- Node.js 18+ and npm 9+ installed locally
+- Write access to the repository
+
+## Configuration
+
+### Repository Settings
+
+Your `package.json` must include the `homepage` field pointing to your GitHub Pages URL:
+
+```json package.json
+{
+  "name": "github-dashboard",
+  "homepage": "https://YOUR-USERNAME.github.io/YOUR-REPO-NAME",
+  "scripts": {
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.1"
+  }
+}
+```
+
+<Warning>
+  Make sure to update the `homepage` field with your actual GitHub username and repository name. This ensures that all asset paths are resolved correctly when deployed.
+</Warning>
+
+### Vite Base Path
+
+Your `vite.config.js` must include the `base` option matching your repository name:
+
+```javascript vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/YOUR-REPO-NAME/',
+})
+```
+
+The `base` path ensures that Vite generates correct asset URLs for the subdirectory where your app will be hosted.
+
+## Manual Deployment
+
+### Install gh-pages Package
+
+The `gh-pages` package is included as a dev dependency:
+
+```bash
+npm install --save-dev gh-pages
+```
+
+### Deploy with npm Script
+
+<Steps>
+  <Step title="Build and Deploy">
+    Run the deploy script which builds the project and publishes to GitHub Pages:
+    
+    ```bash
+    npm run deploy
+    ```
+    
+    This command:
+    1. Runs `npm run build` to create the production build in the `dist` directory
+    2. Runs `gh-pages -d dist` to publish the `dist` folder to the `gh-pages` branch
+  </Step>
+
+  <Step title="Wait for Deployment">
+    GitHub Pages will automatically detect the new `gh-pages` branch and deploy it. This typically takes 1-2 minutes.
+  </Step>
+
+  <Step title="Verify Deployment">
+    Visit your GitHub Pages URL to confirm the deployment:
+    
+    ```
+    https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/
+    ```
+  </Step>
+</Steps>
+
+### How gh-pages Works
+
+The `gh-pages` package:
+
+1. Creates or updates a `gh-pages` branch in your repository
+2. Copies the contents of the `dist` directory to this branch
+3. Pushes the branch to GitHub
+4. GitHub Pages automatically serves the content from this branch
+
+<Note>
+  The `gh-pages` branch is separate from your main branch and contains only the built static files, not your source code.
+</Note>
+
+## Automated Deployment (CI/CD)
+
+GitScope includes a GitHub Actions workflow that automatically deploys to GitHub Pages on every push to the main branch.
+
+### Workflow Configuration
+
+The workflow is defined in `.github/workflows/deploy.yml`:
+
+```yaml .github/workflows/deploy.yml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+### Workflow Triggers
+
+The workflow runs automatically when:
+
+- Code is pushed to the `main` branch
+- Manually triggered using the "workflow_dispatch" event from the Actions tab
+
+### Required Permissions
+
+The workflow requires specific permissions:
+
+- `contents: read` - Read repository contents
+- `pages: write` - Write to GitHub Pages
+- `id-token: write` - Write GitHub OIDC token for deployment
+
+### Setup GitHub Pages for Actions
+
+<Steps>
+  <Step title="Enable GitHub Pages">
+    Go to your repository settings → Pages
+  </Step>
+
+  <Step title="Configure Source">
+    Under "Build and deployment", select:
+    - **Source**: GitHub Actions
+  </Step>
+
+  <Step title="Push to Main">
+    Commit and push your changes to the `main` branch. The workflow will trigger automatically.
+  </Step>
+
+  <Step title="Monitor Deployment">
+    Go to the Actions tab in your repository to monitor the deployment progress. Once complete, your site will be live at your GitHub Pages URL.
+  </Step>
+</Steps>
+
+<Note>
+  When using GitHub Actions deployment, you don't need the `gh-pages` package or branch. GitHub Pages will serve directly from the uploaded artifact.
+</Note>
+
+## Troubleshooting
+
+### 404 Errors After Deployment
+
+If you see 404 errors for assets:
+
+1. Verify the `base` path in `vite.config.js` matches your repository name
+2. Verify the `homepage` field in `package.json` is correct
+3. Ensure both paths include a trailing slash: `/repo-name/`
+
+### Deployment Not Updating
+
+If changes aren't reflected:
+
+1. Clear your browser cache
+2. Wait 1-2 minutes for GitHub Pages to propagate changes
+3. Check the Actions tab for deployment errors
+4. Verify the build completed successfully
+
+### Permission Errors in GitHub Actions
+
+If the workflow fails with permission errors:
+
+1. Go to Settings → Actions → General
+2. Under "Workflow permissions", select "Read and write permissions"
+3. Enable "Allow GitHub Actions to create and approve pull requests"
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Build Process" icon="gear" href="/deployment/build-process">
+    Learn about the Vite build configuration and optimization
+  </Card>
+  <Card title="Environment Setup" icon="wrench" href="/deployment/environment-setup">
+    Configure your development environment
+  </Card>
+</CardGroup>

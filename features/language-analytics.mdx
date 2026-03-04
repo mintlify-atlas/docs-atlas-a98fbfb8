@@ -1,0 +1,400 @@
+---
+title: 'Language Analytics'
+description: 'Visualize programming language distribution with interactive pie charts'
+icon: 'chart-pie'
+---
+
+## Overview
+
+GitScope's Language Analytics feature provides a comprehensive visualization of programming languages used across a user's repositories. Using an interactive pie chart and detailed breakdown, you can instantly understand a developer's technology stack and expertise.
+
+<Note>
+  Language data is aggregated from the top 12 most recently updated repositories to provide accurate, up-to-date insights.
+</Note>
+
+## How It Works
+
+The language analytics engine:
+
+<Steps>
+  <Step title="Fetches Language Data">
+    Retrieves byte counts for each language from the user's top 12 repositories
+  </Step>
+  
+  <Step title="Aggregates Totals">
+    Combines language usage across all repositories
+  </Step>
+  
+  <Step title="Calculates Percentages">
+    Computes the percentage share for each language
+  </Step>
+  
+  <Step title="Renders Visualization">
+    Displays the top 10 languages in a pie chart and legend
+  </Step>
+</Steps>
+
+## Data Aggregation
+
+Languages are fetched and aggregated using smart caching:
+
+```javascript LanguageChart.jsx
+const cache = useRef({})
+
+useEffect(() => {
+  if (!repos.length) return
+  setLoading(true)
+
+  const top = repos.slice(0, 12)
+  const fetches = top.map(r => {
+    const key = `${username}/${r.name}`
+    if (cache.current[key]) return Promise.resolve(cache.current[key])
+    
+    return getLanguages(username, r.name).then(d => {
+      cache.current[key] = d
+      return d
+    }).catch(() => ({}))
+  })
+
+  Promise.all(fetches).then(results => {
+    const totals = {}
+    results.forEach(langs => {
+      Object.entries(langs).forEach(([lang, bytes]) => {
+        totals[lang] = (totals[lang] || 0) + bytes
+      })
+    })
+    
+    // Process and display top 10
+  })
+}, [repos, username])
+```
+
+<Tip>
+  The component caches language data to avoid redundant API calls when switching between users.
+</Tip>
+
+## Percentage Calculation
+
+Language percentages are computed from total byte counts:
+
+```javascript LanguageChart.jsx
+const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1])
+const total = sorted.reduce((s, [, v]) => s + v, 0)
+
+const top10 = sorted.slice(0, 10).map(([name, val], i) => ({
+  name,
+  value: val,
+  pct: Math.round((val / total) * 100),
+  color: COLORS[i % COLORS.length],
+}))
+```
+
+<Note>
+  Percentages are rounded to whole numbers for cleaner display. Only the top 10 languages are shown.
+</Note>
+
+## Color Scheme
+
+Languages are color-coded with a vibrant palette:
+
+```javascript LanguageChart.jsx
+const COLORS = [
+  '#2563eb', // Blue
+  '#10b981', // Green
+  '#f59e0b', // Amber
+  '#8b5cf6', // Purple
+  '#ef4444', // Red
+  '#06b6d4', // Cyan
+  '#f97316', // Orange
+  '#ec4899', // Pink
+  '#84cc16', // Lime
+  '#6366f1', // Indigo
+]
+```
+
+<CardGroup cols={2}>
+  <Card title="Consistent Colors" icon="palette">
+    Each language gets a consistent color position in the chart
+  </Card>
+  <Card title="High Contrast" icon="eye">
+    Colors chosen for maximum visual distinction and accessibility
+  </Card>
+</CardGroup>
+
+## Interactive Pie Chart
+
+The visualization uses Recharts for smooth, responsive graphics:
+
+```jsx LanguageChart.jsx
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+
+<ResponsiveContainer width="100%" height={200}>
+  <PieChart>
+    <Pie
+      data={data}
+      cx="50%"
+      cy="50%"
+      innerRadius={55}
+      outerRadius={85}
+      paddingAngle={2}
+      dataKey="value"
+    >
+      {data.map((entry, i) => (
+        <Cell key={entry.name} fill={entry.color} stroke="none" />
+      ))}
+    </Pie>
+    <Tooltip content={<CustomTooltip />} />
+  </PieChart>
+</ResponsiveContainer>
+```
+
+### Chart Features
+
+<Accordion title="Donut Chart Design">
+  Uses inner radius of 55 and outer radius of 85 for an elegant donut appearance.
+</Accordion>
+
+<Accordion title="Padding Between Slices">
+  2-pixel padding between segments for visual clarity.
+</Accordion>
+
+<Accordion title="Responsive Sizing">
+  Chart automatically adapts to container width while maintaining 200px height.
+</Accordion>
+
+<Accordion title="Custom Tooltips">
+  Hover over chart segments to see language name and exact percentage.
+</Accordion>
+
+## Custom Tooltip
+
+Interactive tooltips display language details on hover:
+
+```jsx LanguageChart.jsx
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload?.length) {
+    const d = payload[0]
+    return (
+      <div className="tooltip">
+        <span className="dot" style={{ background: d.payload.color }} />
+        <span>{d.name}</span>
+        <strong>{d.payload.pct}%</strong>
+      </div>
+    )
+  }
+  return null
+}
+```
+
+<Tip>
+  Tooltips show a color-matched dot, language name, and percentage for quick reference.
+</Tip>
+
+## Language Legend
+
+A detailed legend complements the chart with progress bars:
+
+```jsx LanguageChart.jsx
+<ul className="legend">
+  {data.map(d => (
+    <li key={d.name} className="legend-item">
+      <div className="legend-left">
+        <span className="legend-dot" style={{ background: d.color }} />
+        <span className="legend-name">{d.name}</span>
+      </div>
+      
+      <div className="bar-wrap">
+        <div
+          className="bar"
+          style={{ width: `${d.pct}%`, background: d.color }}
+        />
+      </div>
+      
+      <span className="legend-pct">{d.pct}%</span>
+    </li>
+  ))}
+</ul>
+```
+
+### Legend Components
+
+<CardGroup cols={3}>
+  <Card title="Color Dot" icon="circle">
+    Matches the language color in the pie chart
+  </Card>
+  <Card title="Language Name" icon="code">
+    Full name of the programming language
+  </Card>
+  <Card title="Progress Bar" icon="chart-bar">
+    Visual representation of language percentage
+  </Card>
+  <Card title="Percentage" icon="percent">
+    Exact percentage rounded to whole number
+  </Card>
+</CardGroup>
+
+## Loading State
+
+While fetching language data, skeleton loaders maintain layout:
+
+```jsx LanguageChart.jsx
+if (loading) return (
+  <div className="card">
+    <h3 className="title">Lenguajes más usados</h3>
+    <div className="loading-grid">
+      {[1,2,3,4,5].map(i => (
+        <div key={i} className="skeleton sk-row" />
+      ))}
+    </div>
+  </div>
+)
+```
+
+<Note>
+  Skeleton rows match the height of actual legend items for a smooth transition.
+</Note>
+
+## Empty State Handling
+
+If no language data is available, the component doesn't render:
+
+```javascript LanguageChart.jsx
+if (!data.length) return null
+```
+
+<Warning>
+  The language chart only appears when valid data is available. Users with no repositories or private-only repos may not see this section.
+</Warning>
+
+## API Integration
+
+Language data comes from GitHub's Languages API:
+
+```javascript useGitHub.js
+const getLanguages = useCallback(
+  (owner, repo) => request(`/repos/${owner}/${repo}/languages`),
+  [request]
+)
+
+// Example response:
+// {
+//   "JavaScript": 12543,
+//   "TypeScript": 8921,
+//   "CSS": 3421
+// }
+```
+
+<Note>
+  The API returns byte counts for each language, which GitScope converts to percentages.
+</Note>
+
+## Performance Optimization
+
+### Caching Strategy
+
+```javascript LanguageChart.jsx
+const cache = useRef({})
+
+const key = `${username}/${r.name}`
+if (cache.current[key]) return Promise.resolve(cache.current[key])
+```
+
+<Tip>
+  Language data is cached per repository to minimize API calls and improve performance when revisiting users.
+</Tip>
+
+### Parallel Fetching
+
+```javascript
+const fetches = top.map(r => getLanguages(username, r.name))
+Promise.all(fetches).then(results => { /* aggregate */ })
+```
+
+<CardGroup cols={2}>
+  <Card title="Concurrent Requests" icon="zap">
+    All repositories fetched in parallel for faster loading
+  </Card>
+  <Card title="Error Resilience" icon="shield">
+    Failed requests return empty objects without breaking the chart
+  </Card>
+</CardGroup>
+
+## Insights You Can Gain
+
+<Steps>
+  <Step title="Primary Technology">
+    The largest slice shows the developer's main programming language
+  </Step>
+  
+  <Step title="Language Diversity">
+    More evenly distributed slices indicate a polyglot developer
+  </Step>
+  
+  <Step title="Technology Trends">
+    Compare with repository update times to see recent language adoption
+  </Step>
+  
+  <Step title="Specialization Level">
+    A dominant language (>70%) suggests deep specialization
+  </Step>
+</Steps>
+
+## Use Cases
+
+<Accordion title="Hiring & Recruitment">
+  Quickly assess a candidate's technical stack and language expertise before interviews.
+</Accordion>
+
+<Accordion title="Open Source Contribution">
+  Find developers who work in specific languages for collaboration opportunities.
+</Accordion>
+
+<Accordion title="Technology Research">
+  Analyze language adoption patterns among leading developers in a field.
+</Accordion>
+
+<Accordion title="Personal Growth">
+  Track your own language diversity and identify areas for skill expansion.
+</Accordion>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Consider Context" icon="lightbulb">
+    Byte count doesn't equal expertise—a small library might be more impactful than a large project
+  </Card>
+  <Card title="Check Recency" icon="clock">
+    Combine with repository update dates to understand current vs. legacy skills
+  </Card>
+  <Card title="Review Top Repos" icon="star">
+    Star-sorted repositories show which languages are used in popular projects
+  </Card>
+  <Card title="Explore Commits" icon="git-commit">
+    View commit history to validate active usage of displayed languages
+  </Card>
+</CardGroup>
+
+## Animation Effects
+
+The chart animates in with a delayed fade:
+
+```jsx
+<div className="card fade-up fade-up-delay-2">
+  {/* Chart content */}
+</div>
+```
+
+<Note>
+  The delay ensures the language chart appears after user info and repositories, creating a natural reading flow.
+</Note>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Repository Explorer" icon="folder-open" href="/features/repository-explorer">
+    See which repositories contribute to each language
+  </Card>
+  <Card title="User Search" icon="search" href="/features/user-search">
+    Search different users to compare language distributions
+  </Card>
+</CardGroup>

@@ -1,0 +1,150 @@
+---
+title: Header Component
+description: Application header with branding, theme toggle, rate limit display, and token management
+---
+
+## Overview
+
+The `Header` component renders the top navigation bar of GitScope, displaying the application branding, GitHub API rate limit status, theme toggle button, and token management interface.
+
+**Location in UI**: Fixed at the top of the application viewport
+
+**Source**: `~/workspace/source/src/components/Header.jsx`
+
+## Props
+
+<ParamField path="theme" type="string" required>
+  Current theme mode. Expected values: `'light'` or `'dark'`
+</ParamField>
+
+<ParamField path="toggleTheme" type="function" required>
+  Callback function to toggle between light and dark themes. Called when the theme button is clicked.
+  
+  ```javascript
+  toggleTheme: () => void
+  ```
+</ParamField>
+
+<ParamField path="rateLimit" type="object">
+  GitHub API rate limit information. Contains `remaining`, `limit`, and `reset` properties.
+  
+  ```typescript
+  rateLimit: {
+    remaining: number,  // Requests remaining
+    limit: number,      // Total request limit
+    reset: number       // Unix timestamp when limit resets
+  } | null
+  ```
+</ParamField>
+
+<ParamField path="onTokenClick" type="function" required>
+  Callback function invoked when the "Token API" button or rate limit indicator is clicked. Opens the token management modal.
+  
+  ```javascript
+  onTokenClick: () => void
+  ```
+</ParamField>
+
+## Usage Example
+
+From `App.jsx:75-80`:
+
+```jsx
+<Header
+  theme={theme}
+  toggleTheme={toggleTheme}
+  rateLimit={rateLimit}
+  onTokenClick={() => setShowToken(true)}
+/>
+```
+
+## Key Features
+
+### Brand Identity
+
+Displays the GitScope logo with GitHub icon and tagline:
+
+```jsx
+<div className={styles.brand}>
+  <div className={styles.logo}>
+    <Github size={20} />
+  </div>
+  <div>
+    <span className={styles.name}>GitScope</span>
+    <span className={styles.tagline}>Análisis de Repositorios</span>
+  </div>
+</div>
+```
+
+### Rate Limit Indicator
+
+Displays API rate limit with color-coded status:
+
+```jsx
+const ratePct = rateLimit ? (rateLimit.remaining / rateLimit.limit) * 100 : 100
+const rateColor = ratePct > 50 ? 'var(--green)' : ratePct > 20 ? 'var(--yellow)' : 'var(--red)'
+```
+
+- **Green**: > 50% remaining
+- **Yellow**: 20-50% remaining  
+- **Red**: < 20% remaining
+
+The button shows remaining/total requests and displays reset time on hover:
+
+```jsx
+<button className={styles.rateBtn} onClick={onTokenClick} title={`Reset: ${resetTime}`}>
+  <Zap size={13} style={{ color: rateColor }} />
+  <span style={{ color: rateColor }}>{rateLimit.remaining}</span>
+  <span className={styles.rateSep}>/</span>
+  <span>{rateLimit.limit}</span>
+</button>
+```
+
+### Theme Toggle
+
+Switches between light and dark modes using icon indicators:
+
+```jsx
+<button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle theme">
+  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+</button>
+```
+
+### Token Management
+
+Provides access to the GitHub token configuration:
+
+```jsx
+<button className={styles.tokenBtn} onClick={onTokenClick}>
+  Token API
+</button>
+```
+
+## Implementation Details
+
+### Icons
+
+Uses Lucide React icons:
+- `Github` - Brand logo
+- `Moon`/`Sun` - Theme indicators
+- `Zap` - Rate limit indicator
+
+### Rate Limit Reset Time
+
+Converts Unix timestamp to localized time string:
+
+```jsx
+const resetTime = rateLimit ? new Date(rateLimit.reset).toLocaleTimeString() : null
+```
+
+### Styling
+
+Imports modular CSS from `Header.module.css` for component-scoped styles.
+
+## Accessibility
+
+The theme toggle button includes an `aria-label` for screen readers:
+
+```jsx
+aria-label="Toggle theme"
+```

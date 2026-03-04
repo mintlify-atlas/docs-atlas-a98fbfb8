@@ -1,0 +1,301 @@
+---
+title: 'GitHub API Rate Limits'
+description: 'Understanding how GitScope tracks and displays GitHub API rate limits in real-time'
+---
+
+# GitHub API Rate Limits
+
+GitHub enforces rate limits on API requests to ensure fair usage and system stability. GitScope provides real-time visual indicators to help you monitor your consumption.
+
+## Rate Limit Tiers
+
+GitHub API rate limits vary based on authentication:
+
+| Authentication Type | Requests per Hour | Use Case |
+|---------------------|-------------------|----------|
+| **No authentication** | 60 | Quick browsing, limited usage |
+| **Personal Access Token** | 5,000 | Standard authenticated use |
+| **GitHub App** | 15,000 | High-volume integrations |
+
+<Info>
+  GitScope uses Personal Access Tokens, which provide **5,000 requests per hour** when configured.
+</Info>
+
+## How GitScope Tracks Rate Limits
+
+Every response from the GitHub API includes rate limit headers. GitScope automatically extracts and displays this information.
+
+### Implementation Details
+
+The `useGitHub` hook extracts rate limit data from response headers:
+
+```javascript src/hooks/useGitHub.js
+const request = useCallback(async (path, params = {}) => {
+  const url = new URL(`${BASE}${path}`)
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+  
+  const res = await fetch(url.toString(), { headers: headers() })
+  
+  // Extract rate limit headers
+  const remaining = res.headers.get('x-ratelimit-remaining')
+  const limit = res.headers.get('x-ratelimit-limit')
+  const reset = res.headers.get('x-ratelimit-reset')
+  
+  if (remaining !== null) {
+    setRateLimit({ 
+      remaining: +remaining, 
+      limit: +limit, 
+      reset: +reset * 1000  // Convert to milliseconds
+    })
+  }
+  
+  // Handle rate limit errors
+  if (res.status === 403) {
+    const data = await res.json()
+    throw new Error(data.message || 'Rate limit exceeded')
+  }
+  
+  return res.json()
+}, [headers])
+```
+
+### Response Headers
+
+GitHub includes three key headers in every API response:
+
+- `x-ratelimit-remaining` - Number of requests left in the current window
+- `x-ratelimit-limit` - Maximum requests allowed per hour
+- `x-ratelimit-reset` - Unix timestamp when the limit resets
+
+<Note>
+  The `reset` timestamp is converted from seconds to milliseconds (`* 1000`) to match JavaScript's `Date` object format.
+</Note>
+
+## Visual Indicators
+
+GitScope displays rate limit information prominently in the application header.
+
+### Header Component Display
+
+```jsx src/components/Header.jsx
+const ratePct = rateLimit ? (rateLimit.remaining / rateLimit.limit) * 100 : 100
+const rateColor = ratePct > 50 
+  ? 'var(--green)' 
+  : ratePct > 20 
+    ? 'var(--yellow)' 
+    : 'var(--red)'
+const resetTime = rateLimit 
+  ? new Date(rateLimit.reset).toLocaleTimeString() 
+  : null
+
+return (
+  <button 
+    className={styles.rateBtn} 
+    onClick={onTokenClick} 
+    title={`Reset: ${resetTime}`}
+  >
+    <Zap size={13} style={{ color: rateColor }} />
+    <span style={{ color: rateColor }}>{rateLimit.remaining}</span>
+    <span className={styles.rateSep}>/</span>
+    <span>{rateLimit.limit}</span>
+  </button>
+)
+```
+
+### Color Coding System
+
+The rate limit indicator uses a traffic light system:
+
+<Steps>
+  <Step title="Green Zone (>50%)">
+    **Healthy**: You have plenty of requests remaining. Safe to continue normal usage.
+    
+    Color: `var(--green)` - `#10b981` (light) / `#3fb950` (dark)
+  </Step>
+
+  <Step title="Yellow Zone (20-50%)">
+    **Caution**: You're using more than half your quota. Consider slowing down or waiting for reset.
+    
+    Color: `var(--yellow)` - `#f59e0b` (light) / `#d29922` (dark)
+  </Step>
+
+  <Step title="Red Zone (<20%)">
+    **Critical**: Very few requests left. Approaching rate limit. Wait for reset or reduce activity.
+    
+    Color: `var(--red)` - `#ef4444` (light) / `#f85149` (dark)
+  </Step>
+</Steps>
+
+<Warning>
+  If you reach 0 remaining requests, you'll receive a `403 Forbidden` error. The app displays: "Rate limit exceeded" and you must wait until the reset time.
+</Warning>
+
+## Request Consumption Patterns
+
+Understanding how GitScope uses API requests helps you manage your quota:
+
+### Per User Search
+
+| Action | Endpoint | Requests |
+|--------|----------|----------|
+| Load user profile | `GET /users/:username` | 1 |
+| Load first page of repos | `GET /users/:username/repos` | 1 |
+| Each additional page | `GET /users/:username/repos?page=N` | 1 per page |
+
+### Per Repository Interaction
+
+| Action | Endpoint | Requests |
+|--------|----------|----------|
+| View commits | `GET /repos/:owner/:repo/commits` | 1 |
+| Load language stats | `GET /repos/:owner/:repo/languages` | 1 |
+
+### Language Chart
+
+The `LanguageChart` component fetches language data for up to 12 repositories in parallel:
+
+```javascript src/components/LanguageChart.jsx
+// Fetches languages for first 12 repos
+const toFetch = reposToUse.slice(0, 12)
+
+// Parallel requests (up to 12 at once)
+const results = await Promise.all(
+  toFetch.map(r => getLanguages(username, r.name))
+)
+```
+
+<Info>
+  The language chart caches results in memory (`useRef`) to avoid duplicate requests during the same session.
+</Info>
+
+### Example Scenario
+
+Searching for a user with 100 repositories:
+- Initial search: `2` requests (user + first 30 repos)
+- Language chart: `12` requests (fetches for first 12 repos)
+- Clicking a repo: `1` request (commits)
+- Loading page 2: `1` request (next 30 repos)
+
+**Total**: ~16 requests to fully explore one user
+
+## Rate Limit Reset
+
+### How Reset Works
+
+GitHub rate limits operate on a **rolling window** basis:
+- Limits reset **exactly one hour** after your first request in the current window
+- The reset time is provided in the `x-ratelimit-reset` header
+- You can see the exact reset time by hovering over the rate limit indicator
+
+### Tooltip Display
+
+The rate limit button shows the reset time on hover:
+
+```jsx
+<button title={`Reset: ${resetTime}`}>
+  {/* ... */}
+</button>
+```
+
+Where `resetTime` is formatted as a localized time string:
+```javascript
+const resetTime = new Date(rateLimit.reset).toLocaleTimeString()
+// Example: "3:45:22 PM"
+```
+
+## Handling Rate Limit Errors
+
+When you exceed your rate limit, GitHub returns a `403 Forbidden` response:
+
+```javascript src/hooks/useGitHub.js
+if (res.status === 403) {
+  const data = await res.json()
+  throw new Error(data.message || 'Rate limit exceeded')
+}
+```
+
+GitScope displays this error in the `ErrorBanner` component:
+
+```jsx src/App.jsx
+{error && (
+  <ErrorBanner 
+    message={error} 
+    onDismiss={() => setError(null)} 
+  />
+)}
+```
+
+<Warning>
+  When you hit the rate limit, **wait until the reset time** or **add a Personal Access Token** to increase your quota to 5,000 requests/hour.
+</Warning>
+
+## Token Hint for Unauthenticated Users
+
+If you're using GitScope without a token, you'll see a helpful hint:
+
+```jsx src/App.jsx
+{!token && (
+  <div className={styles.tokenHint}>
+    <span>💡 Agrega un token para aumentar el rate limit de 60 a 5,000 req/h</span>
+    <button onClick={() => setShowToken(true)} className={styles.tokenHintBtn}>
+      Agregar token
+    </button>
+  </div>
+)}
+```
+
+This banner appears when:
+- No token is stored in localStorage
+- The user is viewing repository data
+- Reminds users they're limited to 60 requests/hour
+
+## Best Practices
+
+<Steps>
+  <Step title="Use a Token">
+    Always configure a Personal Access Token to get 5,000 requests/hour instead of 60.
+  </Step>
+
+  <Step title="Monitor the Indicator">
+    Keep an eye on the color-coded rate limit in the header. Slow down if it turns yellow or red.
+  </Step>
+
+  <Step title="Implement Caching">
+    GitScope caches language data - consider similar patterns for your own integrations.
+  </Step>
+
+  <Step title="Handle Errors Gracefully">
+    Always catch and display rate limit errors with clear messaging to users.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Rate Limit Not Showing
+
+- Ensure you've made at least one API request (search for a user)
+- Check browser console for errors in the network tab
+- Verify the `useGitHub` hook is properly extracting headers
+
+### Wrong Limit Displayed
+
+- If showing `60`: You're unauthenticated or token is invalid
+- If showing `5000`: Token is working correctly
+- If showing `15000`: You're using a GitHub App (uncommon)
+
+### Hitting Limits Quickly
+
+- The language chart fetches data for 12 repos simultaneously
+- Each page of repos counts as one request
+- Viewing multiple users in quick succession consumes quota rapidly
+- Consider waiting for the reset time or reducing parallel requests
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Token Setup" icon="key" href="./api-token">
+    Configure your token to increase rate limits to 5,000/hour
+  </Card>
+  <Card title="Themes" icon="palette" href="./themes">
+    Customize your visual experience with dark mode
+  </Card>
+</CardGroup>

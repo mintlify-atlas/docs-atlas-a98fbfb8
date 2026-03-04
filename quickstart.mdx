@@ -1,80 +1,241 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get analyzing GitHub profiles in under 2 minutes
 ---
 
-## Get started in three steps
+# Quickstart
 
-Get your documentation site running locally and make your first customization.
+Get started with GitScope and analyze your first GitHub profile in under 2 minutes. This guide will walk you through accessing the live demo and performing your first profile analysis.
 
-### Step 1: Set up your local environment
+## Try the live demo
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+The fastest way to experience GitScope is through the live demo hosted on GitHub Pages.
+
+<Steps>
+  <Step title="Open the demo">
+    Visit the live demo at:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    **[https://david-andino.github.io/github-dashboard/](https://david-andino.github.io/github-dashboard/)**
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    You'll see the main search interface with a hero section and suggested usernames.
+  </Step>
+  
+  <Step title="Search for a GitHub user">
+    You have two options to start analyzing:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    **Option 1: Use quick suggestions**
+    
+    Click any of the pre-populated username chips below the search bar:
+    - `torvalds` — Creator of Linux and Git
+    - `gvanrossum` — Creator of Python
+    - `sindresorhus` — Popular open source developer
+    - `tj` — Creator of Express.js
+    - `yyx990803` — Creator of Vue.js
+    
+    **Option 2: Search any GitHub user**
+    
+    Type a GitHub username in the search field and click **Analizar** (or press Enter).
+    
+    ```jsx
+    // The search is handled by App.jsx:35-57
+    const search = useCallback(async (username) => {
+      setLoading(true)
+      try {
+        const [userData, reposData] = await Promise.all([
+          getUser(username),
+          getRepos(username, 1, PER_PAGE),
+        ])
+        setUser(userData)
+        setRepos(reposData)
+      } catch (e) {
+        setError(e.message)
+      } finally {
+        setLoading(false)
+      }
+    }, [getUser, getRepos])
+    ```
+  </Step>
+  
+  <Step title="Explore the profile">
+    Once the search completes, you'll see:
+    
+    **Left sidebar:**
+    - User card with avatar, bio, and stats (repos, followers, following, gists)
+    - Language distribution donut chart
+    
+    **Main content area:**
+    - Grid of repositories (30 per page)
+    - Filter by minimum stars
+    - Sort by recent updates, stars, or forks
+    - Pagination controls
+    
+    <Note>
+      The user profile and first page of repositories load simultaneously using `Promise.all()` for optimal performance.
+    </Note>
+  </Step>
+  
+  <Step title="View repository commits">
+    Click on any repository card in the grid to expand the commit panel below.
+    
+    You'll see:
+    - 10 most recent commits with author, message, and SHA
+    - Repository metadata (stars, forks, open issues, size, license)
+    - Direct link to view the repository on GitHub
+    
+    Click the same repository again (or the × button) to close the panel.
+    
+    ```jsx
+    // Commit fetching from useGitHub.js:53-55
+    const getCommits = useCallback((owner, repo, per_page = 10) =>
+      request(`/repos/${owner}/${repo}/commits`, { per_page }),
+      [request])
+    ```
+  </Step>
+  
+  <Step title="Try filtering and sorting">
+    Experiment with the repository controls:
+    
+    **Filter by stars:**
+    - Enter a minimum star count (e.g., 100)
+    - Only repositories with ≥ that number of stars will display
+    
+    **Sort repositories:**
+    - **Recientes** — Most recently updated (default)
+    - **⭐ Stars** — Highest star count first
+    - **🍴 Forks** — Most forked repositories first
+    
+    ```jsx
+    // Client-side filtering and sorting from RepoList.jsx:33-39
+    const filtered = repos
+      .filter(r => r.stargazers_count >= minStars)
+      .sort((a, b) => {
+        if (sort === 'stars') return b.stargazers_count - a.stargazers_count
+        if (sort === 'forks') return b.forks_count - a.forks_count
+        return new Date(b.updated_at) - new Date(a.updated_at)
+      })
+    ```
+  </Step>
+  
+  <Step title="Toggle dark mode">
+    Click the 🌙/☀️ icon in the top-right header to switch between dark and light themes.
+    
+    Your preference is saved in `localStorage` and persists across sessions.
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Understanding the interface
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+### Header components
 
-### Step 3: Go live
+The header displays three key elements:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+1. **GitScope logo** — Returns to search when clicked
+2. **Rate limit indicator** — Shows remaining API requests
+3. **Token API button** — Add GitHub token to increase rate limit
+4. **Theme toggle** — Switch between dark/light mode
+
+### Rate limit indicator
+
+Pay attention to the rate limit badge color:
+
+- 🟢 **Green** — More than 50% of requests remaining
+- 🟡 **Yellow** — Between 20-50% remaining
+- 🔴 **Red** — Less than 20% remaining (time to add a token!)
+
+<Warning>
+  Without authentication, you're limited to **60 requests per hour** by the GitHub API. Once exhausted, you'll see a rate limit error.
+</Warning>
+
+### Adding a GitHub token (optional)
+
+To unlock higher rate limits:
+
+<Steps>
+  <Step title="Generate a token">
+    Visit [GitHub Settings → Personal Access Tokens](https://github.com/settings/tokens/new)
+    
+    Required scopes:
+    - ✅ `public_repo`
+    - ✅ `read:user`
+    
+    Generate the token and copy it (starts with `ghp_`)
+  </Step>
+  
+  <Step title="Add to GitScope">
+    1. Click the **Token API** button in the header
+    2. Paste your token in the modal
+    3. Click **Guardar** (Save)
+    
+    Your rate limit immediately increases from 60 to 5,000 requests/hour.
+  </Step>
+</Steps>
+
+<Note>
+  Your token is stored only in your browser's `localStorage` — it's never sent to any server except GitHub's API.
+</Note>
+
+## What's happening under the hood?
+
+GitScope uses four main GitHub REST API endpoints:
+
+| Endpoint | Purpose | Called when |
+|----------|---------|-------------|
+| `GET /users/:username` | Fetch user profile | Search submitted |
+| `GET /users/:username/repos` | List repositories | Search submitted, page changed |
+| `GET /repos/:owner/:repo/commits` | Get commit history | Repository clicked |
+| `GET /repos/:owner/:repo/languages` | Get language stats | Language chart rendered |
+
+```jsx
+// All API calls from useGitHub.js:47-59
+const getUser = useCallback((username) => 
+  request(`/users/${username}`), [request])
+
+const getRepos = useCallback((username, page = 1, per_page = 30) =>
+  request(`/users/${username}/repos`, 
+    { page, per_page, sort: 'updated', direction: 'desc' }),
+  [request])
+
+const getCommits = useCallback((owner, repo, per_page = 10) =>
+  request(`/repos/${owner}/${repo}/commits`, { per_page }),
+  [request])
+
+const getLanguages = useCallback((owner, repo) =>
+  request(`/repos/${owner}/${repo}/languages`),
+  [request])
+```
+
+## Common issues
+
+### User not found
+
+If you see "Usuario no encontrado", the username doesn't exist or the account is private.
+
+### Rate limit exceeded
+
+If you see "Rate limit exceeded":
+
+1. Wait for the rate limit to reset (shown in the header)
+2. Add a GitHub Personal Access Token to increase your limit to 5,000/hour
+
+### No repositories showing
+
+If a user has no public repositories, the repository grid will be empty. Try searching for a different user.
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card
+    title="Install locally"
+    icon="download"
+    href="/installation"
+  >
+    Run GitScope on your own machine for development
+  </Card>
+  <Card
+    title="GitHub API"
+    icon="book"
+    href="/development/github-api"
+  >
+    Learn about all GitHub API endpoints used
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

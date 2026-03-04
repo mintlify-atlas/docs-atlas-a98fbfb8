@@ -1,0 +1,180 @@
+---
+title: 'GitHub API Token Setup'
+description: 'Configure your GitHub Personal Access Token to increase rate limits and unlock full GitScope functionality'
+---
+
+# GitHub API Token Setup
+
+GitHub API tokens authenticate your requests and significantly increase your rate limits from **60 to 5,000 requests per hour**.
+
+<Warning>
+  Your token is stored only in your browser's `localStorage` and is never transmitted to any server other than `api.github.com`. However, treat it like a password and never commit it to version control.
+</Warning>
+
+## Why You Need a Token
+
+Without authentication, GitHub's API limits you to:
+- **60 requests per hour** per IP address
+- No access to private repository data
+
+With a Personal Access Token:
+- **5,000 requests per hour** per user
+- Access to your private repositories (if scopes allow)
+- Better performance and reliability
+
+<Info>
+  GitScope displays a helpful hint in the UI when you're using the app without a token, along with real-time rate limit tracking in the header.
+</Info>
+
+## Creating Your Token
+
+<Steps>
+  <Step title="Navigate to GitHub Settings">
+    Go to [GitHub → Settings → Personal Access Tokens](https://github.com/settings/tokens/new) or click the link directly from the TokenModal in the app.
+  </Step>
+
+  <Step title="Configure Token Details">
+    - **Note**: Enter a descriptive name like `gitscope-app` or `github-dashboard`
+    - **Expiration**: Choose your preferred expiration (30 days, 60 days, 90 days, or custom)
+  </Step>
+
+  <Step title="Select Required Scopes">
+    Check these two scopes:
+    
+    - ✅ `public_repo` - Access public repositories
+    - ✅ `read:user` - Read user profile data
+
+    <Note>
+      These minimal scopes provide read-only access to public data. GitScope does not require write permissions.
+    </Note>
+  </Step>
+
+  <Step title="Generate and Copy">
+    Click **Generate token** at the bottom of the page. Copy the generated token immediately - you won't be able to see it again!
+    
+    The token format looks like: `ghp_xxxxxxxxxxxxxxxxxxxx`
+  </Step>
+</Steps>
+
+## Adding Your Token to GitScope
+
+Once you have your token:
+
+<Steps>
+  <Step title="Open Token Modal">
+    Click the **"Token API"** button in the application header (top-right corner).
+  </Step>
+
+  <Step title="Paste Your Token">
+    - Paste the token into the input field
+    - Use the eye icon to toggle visibility if needed
+    - The input accepts tokens starting with `ghp_`
+  </Step>
+
+  <Step title="Save Configuration">
+    Click **Guardar** (Save) to store the token in localStorage.
+  </Step>
+</Steps>
+
+## How Token Storage Works
+
+GitScope uses the `useGitHub` hook to manage token persistence:
+
+```javascript src/hooks/useGitHub.js
+const [token, setToken] = useState(() => 
+  localStorage.getItem('gh_token') || ''
+)
+
+const saveToken = (t) => {
+  setToken(t)
+  if (t) localStorage.setItem('gh_token', t)
+  else localStorage.removeItem('gh_token')
+}
+```
+
+### Token Flow
+
+1. **Initialization**: Token is loaded from `localStorage.getItem('gh_token')` on app mount
+2. **Usage**: Token is attached to every API request as a Bearer token:
+   ```javascript
+   const headers = useCallback(() => {
+     const h = { 'Accept': 'application/vnd.github+json' }
+     if (token) h['Authorization'] = `Bearer ${token}`
+     return h
+   }, [token])
+   ```
+3. **Persistence**: Any token update is immediately saved to localStorage
+4. **Removal**: Clearing the token removes it from both state and localStorage
+
+## Rate Limit Benefits
+
+<Info>
+  The rate limit indicator in the header changes color based on remaining requests:
+  - 🟢 **Green**: More than 50% available
+  - 🟡 **Yellow**: Between 20% and 50%
+  - 🔴 **Red**: Less than 20% remaining
+</Info>
+
+### API Consumption Breakdown
+
+Typical GitScope usage per user search:
+- `1` request for user profile (`GET /users/:username`)
+- `1` request per page of repositories (30 repos per page)
+- `1` request per repository when viewing commits
+- Up to `12` requests for language statistics (parallelized)
+
+With a token, you can analyze dozens of users without hitting limits.
+
+## Token Security Best Practices
+
+<Warning>
+  **Never share your token or commit it to version control**. If you accidentally expose it, revoke it immediately at [GitHub Token Settings](https://github.com/settings/tokens).
+</Warning>
+
+- Store tokens only in `localStorage`, never in cookies or URL parameters
+- Use minimal required scopes
+- Set reasonable expiration dates (30-90 days)
+- Revoke unused tokens regularly
+- Don't use tokens with write permissions for read-only applications
+
+## Removing Your Token
+
+To remove your token from GitScope:
+
+1. Open the Token Modal (click "Token API" button)
+2. Click **"Eliminar token"** at the bottom left
+3. Confirm by closing the modal
+
+This removes the token from both the app state and localStorage. You'll revert to unauthenticated requests (60 req/hour limit).
+
+## Troubleshooting
+
+### Token Not Working
+
+- Verify the token format starts with `ghp_`
+- Check that required scopes (`public_repo`, `read:user`) are enabled
+- Ensure the token hasn't expired
+- Try generating a new token
+
+### Rate Limit Still Low
+
+- Confirm the token is saved (reload the page and check the modal)
+- Check the rate limit indicator shows `5000` as the limit (not `60`)
+- Verify the token is being sent in request headers (check Network tab in DevTools)
+
+### Token Disappeared
+
+- Check if browser data/localStorage was cleared
+- Ensure you're using the same browser and not in incognito mode
+- Re-add the token using the steps above
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Rate Limits" icon="gauge" href="./rate-limits">
+    Learn how GitScope tracks and displays API rate limits
+  </Card>
+  <Card title="Themes" icon="palette" href="./themes">
+    Customize your visual experience with dark mode
+  </Card>
+</CardGroup>

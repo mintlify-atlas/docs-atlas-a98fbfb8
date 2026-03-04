@@ -1,0 +1,461 @@
+---
+title: 'Error Handling'
+description: 'Error handling patterns and HTTP status code management'
+---
+
+## Overview
+
+GitScope implements comprehensive error handling at multiple levels: HTTP status codes, API errors, rate limiting, and UI error display.
+
+## HTTP Status Code Handling
+
+The `useGitHub` hook handles common HTTP errors in the `request` function:
+
+**Location:** `src/hooks/useGitHub.js:34-42`
+
+### 403 Forbidden (Rate Limit)
+
+```javascript
+if (res.status === 403) {
+  const data = await res.json()
+  throw new Error(data.message || 'Rate limit exceeded')
+}
+```
+
+<Warning>
+  Status 403 typically indicates rate limit exceeded. The error message from GitHub's API is preserved and displayed to the user.
+</Warning>
+
+**Common causes:**
+- Exceeded 60 requests/hour without token
+- Exceeded 5,000 requests/hour with token
+- Invalid or expired token
+
+### 404 Not Found
+
+```javascript
+if (res.status === 404) throw new Error('Usuario no encontrado')
+```
+
+**Triggers when:**
+- Username doesn't exist
+- Repository doesn't exist
+- Private repository accessed without permission
+
+### Generic Error Handling
+
+```javascript
+if (!res.ok) {
+  const data = await res.json()
+  throw new Error(data.message || `HTTP ${res.status}`)
+}
+```
+
+Handles all other error status codes (400, 401, 422, 500, etc.) by:
+1. Attempting to extract error message from response body
+2. Falling back to generic HTTP status code message
+
+## Error Message Patterns
+
+### GitHub API Error Response
+
+```json
+{
+  "message": "API rate limit exceeded for xxx.xxx.xxx.xxx. (But here's the good news: Authenticated requests get a higher rate limit.)",
+  "documentation_url": "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"
+}
+```
+
+### Localized Error Messages
+
+The app provides Spanish error messages for common scenarios:
+
+| HTTP Status | Error Message |
+|-------------|---------------|
+| 403 | GitHub API message or "Rate limit exceeded" |
+| 404 | "Usuario no encontrado" |
+| Other | GitHub message or "HTTP {status}" |
+
+## Try-Catch Patterns
+
+### Search Function Pattern
+
+**Location:** `src/App.jsx:44-56`
+
+```javascript
+const search = useCallback(async (username) => {
+  setLoading(true)
+  setError(null)
+  setUser(null)
+  setRepos([])
+  setSelectedRepo(null)
+  setPage(1)
+  setCurrentUsername(username)
+
+  try {
+    const [userData, reposData] = await Promise.all([
+      getUser(username),
+      getRepos(username, 1, PER_PAGE),
+    ])
+    setUser(userData)
+    setRepos(reposData)
+    setHasMore(reposData.length === PER_PAGE)
+  } catch (e) {
+    setError(e.message)
+  } finally {
+    setLoading(false)
+  }
+}, [getUser, getRepos])
+```
+
+**Key aspects:**
+1. Clear error state before new request
+2. Clear previous results to avoid stale data
+3. Catch errors and store message in state
+4. Always clear loading state in `finally`
+
+### Pagination Error Pattern
+
+**Location:** `src/App.jsx:59-71`
+
+```javascript
+useEffect(() => {
+  if (!currentUsername || page === 1) return
+  setLoading(true)
+  getRepos(currentUsername, page, PER_PAGE)
+    .then(data => {
+      setRepos(data)
+      setHasMore(data.length === PER_PAGE)
+      setSelectedRepo(null)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+    .catch(e => setError(e.message))
+    .finally(() => setLoading(false))
+}, [page])
+```
+
+**Key aspects:**
+1. Guard clause to prevent unnecessary execution
+2. Promise chain with `.catch()` for error handling
+3. Clear loading state regardless of success/failure
+
+### Parallel Request Error Pattern
+
+When fetching multiple resources in parallel, handle errors individually:
+
+```javascript
+const promises = repos.map(r => 
+  getLanguages(username, r.name)
+    .then(langs => ({ ...langs }))
+    .catch(() => ({}))  // Return empty object on error
+)
+
+const results = await Promise.all(promises)
+```
+
+<Note>
+  This pattern allows partial success. If one repository fails, others can still load.
+</Note>
+
+## ErrorBanner Component
+
+The `ErrorBanner` component displays errors to users with a dismissible UI.
+
+**Location:** `src/components/ErrorBanner.jsx`
+
+### Component API
+
+```javascript
+<ErrorBanner 
+  message={error} 
+  onDismiss={() => setError(null)} 
+/>
+```
+
+<ParamField path="message" type="string" required>
+  The error message to display
+</ParamField>
+
+<ParamField path="onDismiss" type="() => void" required>
+  Callback function to clear the error state
+</ParamField>
+
+### Implementation
+
+```javascript
+import { AlertTriangle, X } from 'lucide-react'
+import styles from './ErrorBanner.module.css'
+
+export function ErrorBanner({ message, onDismiss }) {
+  return (
+    <div className={`${styles.banner} fade-up`}>
+      <AlertTriangle size={16} />
+      <span>{message}</span>
+      <button className={styles.dismiss} onClick={onDismiss}>
+        <X size={14} />
+      </button>
+    </div>
+  )
+}
+```
+
+### Usage in App.jsx
+
+**Location:** `src/App.jsx:86-88`
+
+```javascript
+{error && (
+  <ErrorBanner message={error} onDismiss={() => setError(null)} />
+)}
+```
+
+**Pattern:**
+1. Conditionally render only when `error` state exists
+2. Pass error message as prop
+3. Clear error state on dismiss
+
+### Visual Design
+
+The banner includes:
+- ⚠️ Alert triangle icon (from `lucide-react`)
+- Error message text
+- ✕ Dismiss button
+- Fade-up animation on appear
+
+## Rate Limit Error Handling
+
+### Detection
+
+Rate limit errors are detected via:
+1. **HTTP 403** status code
+2. **Rate limit headers** showing 0 remaining
+
+```javascript
+const remaining = res.headers.get('x-ratelimit-remaining')
+if (remaining !== null) {
+  setRateLimit({ 
+    remaining: +remaining, 
+    limit: +limit, 
+    reset: +reset * 1000 
+  })
+}
+```
+
+### Visual Indicator
+
+The Header component displays rate limit status:
+
+```javascript
+// In Header.jsx (conceptual)
+const percentage = (rateLimit.remaining / rateLimit.limit) * 100
+const color = percentage > 50 ? 'green' : percentage > 20 ? 'yellow' : 'red'
+```
+
+<Warning>
+  When rate limit drops below 20%, the indicator turns red to warn users they're approaching the limit.
+</Warning>
+
+### Rate Limit Error Message
+
+GitHub's rate limit error message typically includes:
+- Current rate limit exceeded notification
+- Suggestion to authenticate for higher limits
+- Link to rate limiting documentation
+
+```javascript
+if (res.status === 403) {
+  const data = await res.json()
+  // data.message contains helpful information about rate limits
+  throw new Error(data.message || 'Rate limit exceeded')
+}
+```
+
+## Error State Management
+
+### Single Error State
+
+```javascript
+const [error, setError] = useState(null)
+```
+
+**Benefits:**
+- Simple implementation
+- Only one error displayed at a time
+- New errors replace old ones automatically
+
+### Clearing Errors
+
+Errors should be cleared when:
+1. User dismisses the banner manually
+2. New request begins
+3. User navigates away
+
+```javascript
+// Manual dismissal
+<ErrorBanner onDismiss={() => setError(null)} />
+
+// Before new request
+const search = async (username) => {
+  setError(null)  // Clear previous errors
+  try {
+    // ...
+  } catch (e) {
+    setError(e.message)
+  }
+}
+```
+
+## Error Prevention
+
+### Token Hint
+
+**Location:** `src/App.jsx:111-118`
+
+When no token is configured, display a hint:
+
+```javascript
+{!token && (
+  <div className={styles.tokenHint}>
+    <span>💡 Agrega un token para aumentar el rate limit de 60 a 5,000 req/h</span>
+    <button onClick={() => setShowToken(true)} className={styles.tokenHintBtn}>
+      Agregar token
+    </button>
+  </div>
+)}
+```
+
+### Input Validation
+
+Prevent empty searches:
+
+```javascript
+// In SearchBar component
+const handleSubmit = (e) => {
+  e.preventDefault()
+  if (input.trim()) {
+    onSearch(input.trim())
+  }
+}
+```
+
+## Network Error Handling
+
+### Fetch Errors
+
+Network errors (DNS failures, no internet) throw before status check:
+
+```javascript
+try {
+  const res = await fetch(url.toString(), { headers: headers() })
+  // Status code handling...
+} catch (networkError) {
+  // This catches fetch failures, not HTTP errors
+  throw new Error('Network error: ' + networkError.message)
+}
+```
+
+### Timeout Handling
+
+GitHub API doesn't have built-in timeout. Implement with `AbortController`:
+
+```javascript
+const controller = new AbortController()
+const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+try {
+  const res = await fetch(url, { 
+    headers: headers(), 
+    signal: controller.signal 
+  })
+  clearTimeout(timeoutId)
+  // ...
+} catch (error) {
+  if (error.name === 'AbortError') {
+    throw new Error('Request timeout')
+  }
+  throw error
+}
+```
+
+## Error Testing
+
+### Test Cases
+
+1. **Invalid Username**
+   ```javascript
+   search('user-that-definitely-does-not-exist-12345')
+   // Expected: "Usuario no encontrado"
+   ```
+
+2. **Rate Limit Exceeded**
+   ```javascript
+   // After 60 requests without token
+   // Expected: GitHub's rate limit message
+   ```
+
+3. **Network Offline**
+   ```javascript
+   // Disconnect network
+   search('torvalds')
+   // Expected: Network error
+   ```
+
+4. **Invalid Token**
+   ```javascript
+   saveToken('invalid_token_123')
+   search('torvalds')
+   // Expected: 401 Unauthorized error
+   ```
+
+## Best Practices
+
+<Note>
+  Always clear error state before starting new requests to avoid showing stale errors.
+</Note>
+
+<Warning>
+  Never expose tokens in error messages or console logs.
+</Warning>
+
+### Checklist
+
+- ✅ Clear error state before new requests
+- ✅ Use try-catch-finally for async operations
+- ✅ Always clear loading state in `finally`
+- ✅ Display user-friendly error messages
+- ✅ Provide dismiss functionality for errors
+- ✅ Extract and display GitHub's error messages
+- ✅ Handle rate limits gracefully
+- ✅ Prevent requests with invalid input
+- ✅ Show token hint for unauthenticated users
+
+## Error Recovery
+
+### Automatic Retry
+
+Not implemented by default, but can be added:
+
+```javascript
+const retryRequest = async (fn, maxRetries = 3) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn()
+    } catch (error) {
+      if (i === maxRetries - 1) throw error
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+```
+
+### Rate Limit Recovery
+
+When rate limit exceeded, show reset time:
+
+```javascript
+if (rateLimit && rateLimit.remaining === 0) {
+  const resetDate = new Date(rateLimit.reset)
+  const message = `Rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
+  setError(message)
+}
+```

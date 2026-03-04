@@ -1,0 +1,148 @@
+---
+title: Introduction to GitScope
+description: Real-time GitHub profile analytics dashboard built with React and the GitHub REST API
+---
+
+# Introduction to GitScope
+
+GitScope is a real-time GitHub profile analytics dashboard that lets you analyze any public GitHub user's repositories, commit activity, and programming languages in a clean, fast interface.
+
+<img
+  src="https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white"
+  alt="Vite 5.x"
+/>
+<img
+  src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white"
+  alt="React 18"
+/>
+<img
+  src="https://img.shields.io/badge/GitHub_API-REST_v3-181717?logo=github&logoColor=white"
+  alt="GitHub API"
+/>
+
+## What is GitScope?
+
+GitScope transforms GitHub profile data into actionable insights. Search for any GitHub username and instantly see:
+
+- Complete user profile with bio, location, company, and social links
+- All public repositories with smart filtering and sorting
+- Recent commit history for any repository
+- Programming language distribution across projects
+- Real-time API rate limit monitoring
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get analyzing GitHub profiles in under 2 minutes
+  </Card>
+  <Card
+    title="Installation"
+    icon="download"
+    href="/installation"
+  >
+    Install and run GitScope locally on your machine
+  </Card>
+  <Card
+    title="GitHub API"
+    icon="code"
+    href="/development/github-api"
+  >
+    Explore the GitHub REST API endpoints used by GitScope
+  </Card>
+  <Card
+    title="Configuration"
+    icon="gear"
+    href="/configuration/api-token"
+  >
+    Set up your GitHub token and customize settings
+  </Card>
+</CardGroup>
+
+## Key features
+
+### User profile analysis
+
+View comprehensive profile data including followers, following, gists, and personal information. The profile card displays all essential metadata at a glance.
+
+### Repository grid with filtering
+
+Browse through paginated repositories (30 per page) with powerful filters:
+
+- Filter by minimum star count
+- Sort by update date, stars, or forks
+- Navigate with pagination controls
+- See fork and archived badges
+
+### Commit history viewer
+
+Click any repository to view its 10 most recent commits, including:
+
+- Author avatar and name
+- Commit message
+- SHA hash
+- Repository metadata (stars, forks, issues, size)
+
+### Language distribution chart
+
+Visual donut chart showing programming language breakdown across the user's repositories, powered by Recharts.
+
+### Rate limit monitoring
+
+Real-time visual indicator in the header showing your GitHub API rate limit status:
+
+- 🟢 Green: More than 50% remaining
+- 🟡 Yellow: 20-50% remaining
+- 🔴 Red: Less than 20% remaining
+
+<Note>
+  Without authentication, GitHub limits you to **60 requests per hour**. With a Personal Access Token, this increases to **5,000 requests per hour**.
+</Note>
+
+### Dark mode support
+
+Fully responsive dark and light themes with localStorage persistence. Toggle with the theme button in the header.
+
+## Architecture
+
+GitScope is built with a clean, modern architecture:
+
+- **React 18** with hooks for state management
+- **Vite 5** for lightning-fast development and builds
+- **CSS Modules** for scoped styling
+- **GitHub REST API v3** for all data fetching
+- **Recharts** for data visualization
+- **Lucide React** for icons
+
+<CardGroup cols={1}>
+  <Card
+    title="Custom useGitHub hook"
+    icon="brackets-curly"
+  >
+    All API communication is encapsulated in `src/hooks/useGitHub.js`, which manages authentication, rate limiting, and exposes clean functions: `getUser()`, `getRepos()`, `getCommits()`, and `getLanguages()`.
+  </Card>
+</CardGroup>
+
+## Live demo
+
+🌐 **[Try GitScope now](https://david-andino.github.io/github-dashboard/)** — No installation required
+
+Search for popular developers like `torvalds`, `gvanrossum`, or `sindresorhus` to see GitScope in action.
+
+## Next steps
+
+<Steps>
+  <Step title="Try the quickstart">
+    Follow our [quickstart guide](/quickstart) to analyze your first GitHub profile in under 2 minutes.
+  </Step>
+  <Step title="Install locally">
+    Clone the repository and run GitScope on your machine with our [installation guide](/installation).
+  </Step>
+  <Step title="Add your token">
+    Increase your rate limit to 5,000 requests/hour by adding a GitHub Personal Access Token.
+  </Step>
+</Steps>

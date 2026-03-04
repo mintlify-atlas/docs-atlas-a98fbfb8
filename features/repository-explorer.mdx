@@ -1,0 +1,315 @@
+---
+title: 'Repository Explorer'
+description: 'Browse, filter, and sort repositories with advanced controls'
+icon: 'folder-open'
+---
+
+## Overview
+
+The Repository Explorer provides a powerful interface to browse through a user's GitHub repositories with advanced filtering and sorting capabilities. View repository details, metrics, and navigate through paginated results.
+
+<Note>
+  Repositories are fetched 30 per page with full pagination support for users with extensive repository collections.
+</Note>
+
+## Core Features
+
+<CardGroup cols={3}>
+  <Card title="Star Filtering" icon="star">
+    Filter repositories by minimum star count
+  </Card>
+  <Card title="Smart Sorting" icon="arrow-up-arrow-down">
+    Sort by recency, stars, or forks
+  </Card>
+  <Card title="Pagination" icon="page">
+    Navigate through repositories 30 at a time
+  </Card>
+</CardGroup>
+
+## Filtering Repositories
+
+The filter system allows you to focus on the most relevant repositories:
+
+### Star Count Filter
+
+```jsx RepoList.jsx
+const [minStars, setMinStars] = useState(0)
+
+const filtered = repos
+  .filter(r => r.stargazers_count >= minStars)
+  .sort((a, b) => {
+    if (sort === 'stars') return b.stargazers_count - a.stargazers_count
+    if (sort === 'forks') return b.forks_count - a.forks_count
+    return new Date(b.updated_at) - new Date(a.updated_at)
+  })
+```
+
+<Tip>
+  Use the star filter to quickly find a user's most popular projects. For example, set "Stars ≥ 100" to see only highly-starred repositories.
+</Tip>
+
+### Filter Controls UI
+
+```jsx
+<div className="controls">
+  <div className="filter-group">
+    <Filter size={13} />
+    <span>Stars ≥</span>
+    <input
+      type="number"
+      min="0"
+      value={minStars}
+      onChange={e => setMinStars(Math.max(0, +e.target.value))}
+    />
+  </div>
+  
+  <select value={sort} onChange={e => setSort(e.target.value)}>
+    <option value="updated">Recientes</option>
+    <option value="stars">⭐ Stars</option>
+    <option value="forks">🍴 Forks</option>
+  </select>
+</div>
+```
+
+## Sorting Options
+
+Repositories can be sorted by three different criteria:
+
+<Accordion title="Sort by Recent Activity (Default)">
+  Shows repositories ordered by their last update date. Perfect for finding currently active projects.
+  
+  ```javascript
+  return new Date(b.updated_at) - new Date(a.updated_at)
+  ```
+</Accordion>
+
+<Accordion title="Sort by Stars">
+  Orders repositories by star count (highest first). Ideal for discovering popular projects.
+  
+  ```javascript
+  return b.stargazers_count - a.stargazers_count
+  ```
+</Accordion>
+
+<Accordion title="Sort by Forks">
+  Shows most-forked repositories first. Great for finding projects with active contributor communities.
+  
+  ```javascript
+  return b.forks_count - a.forks_count
+  ```
+</Accordion>
+
+## Repository Cards
+
+Each repository is displayed as an interactive card with comprehensive information:
+
+### Card Layout
+
+```jsx RepoList.jsx
+<button
+  className={`repo-card ${selectedRepo?.id === repo.id ? 'selected' : ''}`}
+  onClick={() => onSelectRepo(repo)}
+>
+  <div className="repo-top">
+    <span className="repo-name">{repo.name}</span>
+    {repo.fork && <span className="badge">fork</span>}
+    {repo.archived && <span className="badge archived">archivado</span>}
+  </div>
+  
+  {repo.description && <p className="desc">{repo.description}</p>}
+  
+  <div className="repo-meta">
+    {repo.language && <LangDot lang={repo.language} />}
+    {repo.stargazers_count > 0 && (
+      <span><Star size={12} />{repo.stargazers_count.toLocaleString()}</span>
+    )}
+    {repo.forks_count > 0 && (
+      <span><GitFork size={12} />{repo.forks_count}</span>
+    )}
+    <span><Clock size={12} />{timeAgo(repo.updated_at)}</span>
+  </div>
+</button>
+```
+
+### Information Displayed
+
+<Steps>
+  <Step title="Repository Name">
+    Bold, prominent name with badges for forked or archived status
+  </Step>
+  
+  <Step title="Description">
+    Repository description (if available) for quick context
+  </Step>
+  
+  <Step title="Language">
+    Primary programming language with color-coded indicator
+  </Step>
+  
+  <Step title="Metrics">
+    Star count, fork count, and last update time
+  </Step>
+</Steps>
+
+## Language Color Coding
+
+Repositories display language indicators with GitHub-style colors:
+
+```javascript RepoList.jsx
+const LANG_COLORS = {
+  JavaScript: '#f7df1e',
+  TypeScript: '#3178c6',
+  Python: '#3572a5',
+  Java: '#b07219',
+  'C++': '#f34b7d',
+  Go: '#00add8',
+  Rust: '#dea584',
+  // ... and more
+}
+
+function LangDot({ lang }) {
+  const color = LANG_COLORS[lang] || 'var(--text-dim)'
+  return (
+    <span className="lang-dot" style={{ background: color }} title={lang}>
+      {lang}
+    </span>
+  )
+}
+```
+
+<Tip>
+  Hover over the language indicator to see the full language name in a tooltip.
+</Tip>
+
+## Time Formatting
+
+Update times are displayed in a human-readable format:
+
+```javascript
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr)
+  const d = Math.floor(diff / 86400000)
+  
+  if (d === 0) return 'hoy'
+  if (d === 1) return 'ayer'
+  if (d < 30) return `hace ${d}d`
+  
+  const m = Math.floor(d / 30)
+  if (m < 12) return `hace ${m}m`
+  return `hace ${Math.floor(m / 12)}a`
+}
+```
+
+## Pagination
+
+Navigate through large repository collections with ease:
+
+```jsx RepoList.jsx
+<div className="pagination">
+  <button
+    onClick={() => setPage(p => Math.max(1, p - 1))}
+    disabled={page === 1}
+  >
+    <ChevronLeft size={16} /> Anterior
+  </button>
+  
+  <span className="page-info">Página {page}</span>
+  
+  <button
+    onClick={() => setPage(p => p + 1)}
+    disabled={!hasMore}
+  >
+    Siguiente <ChevronRight size={16} />
+  </button>
+</div>
+```
+
+<Note>
+  The "Siguiente" button automatically disables when there are no more repositories to load (less than 30 results on current page).
+</Note>
+
+## Interactive Selection
+
+Click any repository card to view detailed commit history:
+
+```javascript App.jsx
+<RepoList
+  repos={repos}
+  onSelectRepo={r => setSelectedRepo(prev => prev?.id === r.id ? null : r)}
+  selectedRepo={selectedRepo}
+/>
+
+{selectedRepo && (
+  <CommitPanel
+    repo={selectedRepo}
+    username={user.login}
+    getCommits={getCommits}
+  />
+)}
+```
+
+<Tip>
+  Selected repositories are highlighted with a different background color. Click again to deselect.
+</Tip>
+
+## Loading States
+
+The explorer shows skeleton loaders during data fetching:
+
+```jsx
+{loading ? (
+  <div className="grid">
+    {[1,2,3,4,5,6].map(i => (
+      <div key={i} className="skeleton sk-card" />
+    ))}
+  </div>
+) : (
+  <div className="grid">
+    {filtered.map((repo, i) => (
+      <RepoCard key={repo.id} repo={repo} index={i} />
+    ))}
+  </div>
+)}
+```
+
+## Empty States
+
+When filters produce no results:
+
+```jsx
+{filtered.length === 0 && repos.length > 0 && (
+  <div className="empty">No hay repos con ≥ {minStars} ⭐</div>
+)}
+```
+
+<Warning>
+  If you see "No hay repos con ≥ X ⭐", try lowering the star filter threshold.
+</Warning>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Start Broad" icon="funnel">
+    Begin with no filters to see all repositories, then narrow down
+  </Card>
+  <Card title="Use Star Sorting" icon="star">
+    Sort by stars to quickly find a user's most popular work
+  </Card>
+  <Card title="Check Recency" icon="clock">
+    Sort by recent activity to find currently maintained projects
+  </Card>
+  <Card title="Explore Commits" icon="git-commit">
+    Click repositories to view commit history and activity
+  </Card>
+</CardGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Commit History" icon="git-commit" href="/features/commit-history">
+    View detailed commit logs for selected repositories
+  </Card>
+  <Card title="User Search" icon="search" href="/features/user-search">
+    Search for different users to explore their repositories
+  </Card>
+</CardGroup>

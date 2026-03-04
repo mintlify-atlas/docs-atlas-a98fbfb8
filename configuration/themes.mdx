@@ -1,0 +1,441 @@
+---
+title: 'Theme Customization'
+description: 'Configure dark mode and customize the visual appearance of GitScope using CSS variables and localStorage persistence'
+---
+
+# Theme Customization
+
+GitScope includes a built-in dark/light theme system with automatic persistence and smooth transitions. Switch between themes instantly with a single click.
+
+## Theme Toggle
+
+The theme toggle is located in the application header (top-right corner):
+
+```jsx src/App.jsx
+const [theme, setTheme] = useState(() => 
+  localStorage.getItem('theme') || 'light'
+)
+
+const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+
+return (
+  <Header
+    theme={theme}
+    toggleTheme={toggleTheme}
+    // ...
+  />
+)
+```
+
+### Toggle Button Component
+
+```jsx src/components/Header.jsx
+<button 
+  className={styles.themeBtn} 
+  onClick={toggleTheme} 
+  aria-label="Toggle theme"
+>
+  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+</button>
+```
+
+The button displays:
+- **Moon icon** (🌙) in light mode - click to switch to dark
+- **Sun icon** (☀️) in dark mode - click to switch to light
+
+<Info>
+  Icons are provided by the `lucide-react` package, ensuring crisp SVG rendering at any size.
+</Info>
+
+## Theme Persistence
+
+GitScope automatically saves your theme preference to localStorage:
+
+```jsx src/App.jsx
+useEffect(() => {
+  document.documentElement.setAttribute('data-theme', theme)
+  localStorage.setItem('theme', theme)
+}, [theme])
+```
+
+### How It Works
+
+<Steps>
+  <Step title="Initial Load">
+    On app mount, the theme is loaded from localStorage:
+    ```javascript
+    const [theme, setTheme] = useState(() => 
+      localStorage.getItem('theme') || 'light'
+    )
+    ```
+    If no saved theme exists, defaults to `'light'`.
+  </Step>
+
+  <Step title="DOM Update">
+    The theme is applied to the document root via a data attribute:
+    ```javascript
+    document.documentElement.setAttribute('data-theme', theme)
+    ```
+    This allows CSS to target `[data-theme="dark"]` selectors.
+  </Step>
+
+  <Step title="Storage Sync">
+    Every theme change is immediately persisted:
+    ```javascript
+    localStorage.setItem('theme', theme)
+    ```
+    Your preference persists across browser sessions.
+  </Step>
+</Steps>
+
+<Note>
+  The theme state is initialized lazily using the functional form of `useState` to avoid reading from localStorage on every render.
+</Note>
+
+## CSS Variables System
+
+GitScope uses CSS custom properties (variables) for theming, defined in `src/index.css`.
+
+### Light Theme (Default)
+
+```css src/index.css
+:root {
+  --bg: #f6f8fa;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f3f7;
+  --border: #e1e7ef;
+  --text: #1a2332;
+  --text-muted: #6b7c93;
+  --text-dim: #9aabb8;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --accent-hover: #1d4ed8;
+  --green: #10b981;
+  --green-soft: #ecfdf5;
+  --yellow: #f59e0b;
+  --yellow-soft: #fffbeb;
+  --purple: #8b5cf6;
+  --purple-soft: #f5f3ff;
+  --red: #ef4444;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'DM Sans', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --transition: 200ms ease;
+}
+```
+
+### Dark Theme
+
+```css src/index.css
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-hover: #1c232d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --text-dim: #484f58;
+  --accent: #58a6ff;
+  --accent-soft: #0d2044;
+  --accent-hover: #79b8ff;
+  --green: #3fb950;
+  --green-soft: #0d2618;
+  --yellow: #d29922;
+  --yellow-soft: #2b1f09;
+  --purple: #bc8cff;
+  --purple-soft: #1e1230;
+  --red: #f85149;
+  --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.4);
+}
+```
+
+## Variable Categories
+
+The CSS variable system is organized into logical groups:
+
+### Background Colors
+
+| Variable | Purpose | Light | Dark |
+|----------|---------|-------|------|
+| `--bg` | Main page background | `#f6f8fa` | `#0d1117` |
+| `--bg-card` | Card/panel backgrounds | `#ffffff` | `#161b22` |
+| `--bg-hover` | Hover states | `#f0f3f7` | `#1c232d` |
+
+### Text Colors
+
+| Variable | Purpose | Light | Dark |
+|----------|---------|-------|------|
+| `--text` | Primary text | `#1a2332` | `#e6edf3` |
+| `--text-muted` | Secondary text | `#6b7c93` | `#8b949e` |
+| `--text-dim` | Tertiary/subtle text | `#9aabb8` | `#484f58` |
+
+### Accent Colors
+
+| Variable | Purpose | Light | Dark |
+|----------|---------|-------|------|
+| `--accent` | Links, buttons, focus | `#2563eb` | `#58a6ff` |
+| `--accent-soft` | Accent backgrounds | `#eff6ff` | `#0d2044` |
+| `--accent-hover` | Hover states | `#1d4ed8` | `#79b8ff` |
+
+### Status Colors
+
+<Info>
+  Status colors are used throughout the app for visual feedback (rate limits, success states, warnings, errors).
+</Info>
+
+| Variable | Purpose | Light | Dark |
+|----------|---------|-------|------|
+| `--green` | Success, healthy | `#10b981` | `#3fb950` |
+| `--yellow` | Warning, caution | `#f59e0b` | `#d29922` |
+| `--red` | Error, critical | `#ef4444` | `#f85149` |
+| `--purple` | Special highlights | `#8b5cf6` | `#bc8cff` |
+
+### Soft Backgrounds
+
+Each status color has a corresponding soft background:
+
+```css
+--green-soft: #ecfdf5;   /* Light green background */
+--yellow-soft: #fffbeb;  /* Light yellow background */
+--purple-soft: #f5f3ff;  /* Light purple background */
+```
+
+These are used for subtle highlights and badges.
+
+### Shadows and Layout
+
+| Variable | Purpose | Value |
+|----------|---------|-------|
+| `--shadow` | Standard elevation | Different opacity for light/dark |
+| `--shadow-lg` | High elevation (modals) | Different opacity for light/dark |
+| `--border` | Border color | `#e1e7ef` / `#30363d` |
+| `--radius` | Standard border radius | `12px` |
+| `--radius-sm` | Small border radius | `8px` |
+
+### Typography
+
+| Variable | Purpose | Value |
+|----------|---------|-------|
+| `--font` | Primary font family | `'DM Sans', sans-serif` |
+| `--font-mono` | Monospace font (code) | `'Space Mono', monospace` |
+
+### Transitions
+
+```css
+--transition: 200ms ease;
+```
+
+Used consistently across all animated properties for smooth theme transitions.
+
+## Smooth Transitions
+
+The body element includes transition properties for seamless theme switching:
+
+```css src/index.css
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+```
+
+<Note>
+  The `200ms ease` transition ensures background and text colors fade smoothly when toggling themes, preventing jarring flashes.
+</Note>
+
+## Using Theme Variables
+
+All components reference CSS variables instead of hardcoded colors:
+
+### Example: Card Styling
+
+```css
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  transition: all var(--transition);
+}
+
+.card:hover {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-lg);
+}
+```
+
+This automatically adapts to the current theme without additional logic.
+
+### Example: Dynamic Rate Limit Colors
+
+The rate limit indicator uses theme-aware colors:
+
+```jsx src/components/Header.jsx
+const rateColor = ratePct > 50 
+  ? 'var(--green)'   // Uses theme-specific green
+  : ratePct > 20 
+    ? 'var(--yellow)' // Uses theme-specific yellow
+    : 'var(--red)'    // Uses theme-specific red
+
+return (
+  <Zap size={13} style={{ color: rateColor }} />
+)
+```
+
+## CSS Modules Integration
+
+GitScope uses CSS Modules for component-scoped styles, but still references global theme variables:
+
+```css Header.module.css
+.header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.themeBtn {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.themeBtn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+```
+
+<Info>
+  CSS Modules prevent class name collisions while still allowing global theme variables to cascade throughout the app.
+</Info>
+
+## Theme Detection
+
+While GitScope doesn't currently implement system theme detection, you can extend it easily:
+
+```javascript
+// Detect system preference
+const [theme, setTheme] = useState(() => {
+  const saved = localStorage.getItem('theme')
+  if (saved) return saved
+  
+  // Fallback to system preference
+  return window.matchMedia('(prefers-color-scheme: dark)').matches 
+    ? 'dark' 
+    : 'light'
+})
+
+// Listen for system theme changes
+useEffect(() => {
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const handleChange = (e) => {
+    if (!localStorage.getItem('theme')) {
+      setTheme(e.matches ? 'dark' : 'light')
+    }
+  }
+  
+  mediaQuery.addEventListener('change', handleChange)
+  return () => mediaQuery.removeEventListener('change', handleChange)
+}, [])
+```
+
+<Warning>
+  This feature is not implemented in the current version. The code above is provided as an example for future enhancement.
+</Warning>
+
+## Customizing Colors
+
+To customize the theme colors:
+
+<Steps>
+  <Step title="Edit CSS Variables">
+    Open `src/index.css` and modify the values in `:root` (light theme) or `[data-theme="dark"]` (dark theme).
+  </Step>
+
+  <Step title="Maintain Contrast">
+    Ensure sufficient contrast ratios for accessibility:
+    - **Normal text**: 4.5:1 minimum
+    - **Large text**: 3:1 minimum
+    - **Interactive elements**: 3:1 minimum
+  </Step>
+
+  <Step title="Test Both Themes">
+    Toggle between light and dark modes to verify your changes work in both contexts.
+  </Step>
+
+  <Step title="Update Status Colors">
+    If modifying status colors (green, yellow, red), update both the main color and soft background variant.
+  </Step>
+</Steps>
+
+## Accessibility Considerations
+
+<Steps>
+  <Step title="ARIA Label">
+    The theme toggle includes an accessible label:
+    ```jsx
+    <button aria-label="Toggle theme" onClick={toggleTheme}>
+      {/* ... */}
+    </button>
+    ```
+  </Step>
+
+  <Step title="Icon Clarity">
+    Uses clear, universally recognized icons (moon/sun) that are culturally understood.
+  </Step>
+
+  <Step title="Color Contrast">
+    Both themes meet WCAG AA standards for text contrast.
+  </Step>
+
+  <Step title="Smooth Transitions">
+    The 200ms transition provides visual feedback without causing motion sickness (under the 300ms threshold).
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Theme Not Persisting
+
+- Check if localStorage is enabled in your browser
+- Ensure you're not in incognito/private mode (some browsers restrict localStorage)
+- Verify the key `'theme'` exists in localStorage (DevTools → Application → Local Storage)
+
+### Theme Not Applying
+
+- Inspect `<html>` element and verify `data-theme` attribute is present
+- Check browser console for errors during theme initialization
+- Clear browser cache and reload
+
+### Colors Look Wrong
+
+- Verify CSS variables are correctly defined in `src/index.css`
+- Check that components reference `var(--variableName)` not hardcoded colors
+- Ensure CSS Modules are importing global variables correctly
+
+### Toggle Button Not Working
+
+- Check that `toggleTheme` function is properly passed to `Header` component
+- Verify `onClick` handler is attached to the button
+- Look for JavaScript errors in browser console
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Token Setup" icon="key" href="./api-token">
+    Configure your GitHub token to unlock full functionality
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="./rate-limits">
+    Learn how GitScope tracks API consumption
+  </Card>
+</CardGroup>

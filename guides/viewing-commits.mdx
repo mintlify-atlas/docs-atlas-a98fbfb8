@@ -1,0 +1,415 @@
+---
+title: 'Viewing Commit History'
+description: 'How to explore repository commits and understand development activity'
+---
+
+The commit panel in GitScope provides instant access to recent commit history, author information, and repository metadata without leaving the dashboard.
+
+## Opening the Commit Panel
+
+<Steps>
+  <Step title="Select a Repository">
+    Click on any repository card in the grid. The card will highlight with a colored border.
+  </Step>
+
+  <Step title="View the Commit Panel">
+    A panel expands below the repository grid showing:
+    - Repository name in the header
+    - Loading animation while fetching commits
+    - The 10 most recent commits once loaded
+  </Step>
+
+  <Step title="Close the Panel">
+    Click the same repository card again, or click the **X** button in the panel header.
+    
+    <Tip>
+      You can also click a different repository to switch directly to its commit history.
+    </Tip>
+  </Step>
+</Steps>
+
+## Understanding the Commit Panel
+
+### Panel Header
+
+The header displays:
+
+- **🔄 Commit Icon**: Visual indicator for the commit panel
+- **Repository Name**: The selected repository in bold
+- **"Ver en GitHub" Link**: Opens the repository on GitHub in a new tab
+- **Close Button (X)**: Closes the commit panel
+
+<Note>
+  The commit panel header remains visible while scrolling through commits, keeping key actions accessible.
+</Note>
+
+### Commit List
+
+Each commit entry shows:
+
+<Steps>
+  <Step title="Author Avatar">
+    Profile picture of the commit author (when available).
+    
+    Missing avatars indicate commits made without a linked GitHub account.
+  </Step>
+
+  <Step title="Commit Message">
+    The first line of the commit message, which typically summarizes the change.
+    
+    Multi-line commits show only the summary line for clean presentation.
+  </Step>
+
+  <Step title="Author and Timestamp">
+    - Author name from the commit metadata
+    - Relative time: "hoy" (today), "ayer" (yesterday), or "hace Xd" (X days ago)
+    
+    <Tip>
+      Recent commits ("hoy" or "ayer") indicate active development.
+    </Tip>
+  </Step>
+
+  <Step title="Commit SHA">
+    Short 7-character commit hash (e.g., `a3b4c5d`) displayed as a code badge.
+    
+    This identifier uniquely references the commit in the repository.
+  </Step>
+</Steps>
+
+### Interactive Commit Links
+
+Every commit in the list is clickable:
+
+1. **Hover**: The commit entry highlights
+2. **Click**: Opens the full commit diff on GitHub
+3. **New Tab**: Commit details open in a new browser tab
+
+<Warning>
+  Clicking a commit opens GitHub. If you're analyzing private networks or restricted environments, be aware that external navigation occurs.
+</Warning>
+
+## Repository Metadata
+
+At the bottom of the commit panel, a metadata bar displays:
+
+<Accordion title="⭐ Stars">
+  Total number of users who starred the repository.
+  
+  **Indicates:**
+  - Community interest
+  - Project popularity
+  - Potential quality signal
+  
+  Hidden if star count is 0.
+</Accordion>
+
+<Accordion title="🍴 Forks">
+  Number of times the repository has been forked.
+  
+  **Indicates:**
+  - Developer adoption
+  - Code reusability
+  - Derivative projects
+  
+  Hidden if fork count is 0.
+</Accordion>
+
+<Accordion title="🐛 Issues">
+  Count of currently open issues.
+  
+  **Indicates:**
+  - Active bug reports
+  - Feature requests
+  - Community engagement
+  
+  Hidden if no open issues.
+  
+  <Note>
+    High issue counts aren't always negative—popular projects naturally accumulate more issues.
+  </Note>
+</Accordion>
+
+<Accordion title="📦 Language">
+  Primary programming language detected by GitHub.
+  
+  **Shows:**
+  - The language with the most bytes of code
+  - Matches the language tag on the repository card
+  
+  Hidden if no language is detected (e.g., data-only repos).
+</Accordion>
+
+<Accordion title="💾 Size">
+  Total repository size in megabytes (MB).
+  
+  **Indicates:**
+  - Project scale
+  - Complexity
+  - Storage requirements
+  
+  Displayed with one decimal place precision.
+  
+  <Tip>
+    Large repositories (50+ MB) may include assets, documentation, or dependencies.
+  </Tip>
+</Accordion>
+
+<Accordion title="📄 License">
+  Software license identifier (SPDX format).
+  
+  **Common licenses:**
+  - MIT: Permissive, widely used
+  - Apache-2.0: Permissive with patent grant
+  - GPL-3.0: Copyleft license
+  - BSD-3-Clause: Permissive with attribution
+  
+  Hidden if no license is detected.
+  
+  <Warning>
+    Always verify license compatibility before using code in your projects.
+  </Warning>
+</Accordion>
+
+## Interpreting Commit Activity
+
+### Active Development Indicators
+
+Signs of healthy, active development:
+
+- ✅ Multiple commits from "hoy" or "ayer"
+- ✅ Commits from different authors
+- ✅ Descriptive commit messages
+- ✅ Regular commit intervals (weekly or more frequent)
+
+### Maintenance Mode Indicators
+
+Signs of stable, mature projects:
+
+- 📅 Commits every few weeks or months
+- 🛠️ Commits focused on bug fixes
+- 📝 Documentation-only commits
+- 🔒 Security patch commits
+
+<Note>
+  Low commit frequency doesn't mean a project is abandoned—mature software often requires less frequent updates.
+</Note>
+
+### Inactive or Abandoned Indicators
+
+Signs a project may be dormant:
+
+- ⚠️ No commits in 6+ months
+- ⚠️ "Archived" badge on the repository card
+- ⚠️ High open issue count with no recent commits
+- ⚠️ Last commit message mentions deprecation
+
+## Commit Message Analysis
+
+Learn about a repository by reading commit messages:
+
+<AccordionGroup>
+  <Accordion title="Feature Development">
+    Messages like:
+    - "Add [feature name]"
+    - "Implement [functionality]"
+    - "Create [component]"
+    
+    **Indicates:** Active feature development, growing functionality
+  </Accordion>
+
+  <Accordion title="Bug Fixes">
+    Messages like:
+    - "Fix [bug description]"
+    - "Resolve [issue number]"
+    - "Patch [problem]"
+    
+    **Indicates:** Maintenance activity, responsiveness to issues
+  </Accordion>
+
+  <Accordion title="Refactoring">
+    Messages like:
+    - "Refactor [component]"
+    - "Improve [code area]"
+    - "Optimize [functionality]"
+    
+    **Indicates:** Code quality focus, technical debt management
+  </Accordion>
+
+  <Accordion title="Documentation">
+    Messages like:
+    - "Update README"
+    - "Add docs for [feature]"
+    - "Document [API]"
+    
+    **Indicates:** User focus, project maturity
+  </Accordion>
+
+  <Accordion title="Dependencies">
+    Messages like:
+    - "Update dependencies"
+    - "Bump [package] version"
+    - "Security update"
+    
+    **Indicates:** Maintenance, security awareness
+  </Accordion>
+</AccordionGroup>
+
+## Author Analysis
+
+### Single Author Commits
+
+**Characteristics:**
+- All commits by the same person
+- Consistent avatar across all entries
+
+**Indicates:**
+- Personal project
+- Individual maintainer
+- Potentially limited review process
+
+### Multiple Author Commits
+
+**Characteristics:**
+- Different avatars in the commit list
+- Various author names
+
+**Indicates:**
+- Team collaboration
+- Open source contributions
+- Established review processes
+
+<Tip>
+  Projects with multiple contributors often have better documentation and more diverse perspectives in the codebase.
+</Tip>
+
+## Using Commit SHAs
+
+The 7-character commit hash (SHA) serves several purposes:
+
+1. **Unique Identifier**: Each commit has a globally unique hash
+2. **Linkable**: Forms part of the commit's GitHub URL
+3. **Traceable**: Can be used with Git commands locally
+4. **Referenceable**: Used in issue comments and pull requests
+
+<Note>
+  The full SHA is actually 40 characters, but 7 characters are sufficient for uniqueness in most repositories.
+</Note>
+
+## Advanced Commit Panel Usage
+
+### Comparing Repositories
+
+<Steps>
+  <Step>
+    Open the commit panel for the first repository
+  </Step>
+  <Step>
+    Note commit frequency, author diversity, and message quality
+  </Step>
+  <Step>
+    Click a different repository to switch panels
+  </Step>
+  <Step>
+    Compare commit patterns between repositories
+  </Step>
+</Steps>
+
+### Tracking Project Evolution
+
+<Steps>
+  <Step>
+    Open a repository's commit panel
+  </Step>
+  <Step>
+    Review the most recent commit messages
+  </Step>
+  <Step>
+    Click "Ver en GitHub" to explore older commits
+  </Step>
+  <Step>
+    Use GitHub's commit history to trace the project's development timeline
+  </Step>
+</Steps>
+
+### Identifying Contributors
+
+<Steps>
+  <Step>
+    Look at author names and avatars in the commit list
+  </Step>
+  <Step>
+    Click an author's avatar to visit their GitHub profile
+  </Step>
+  <Step>
+    Evaluate contributor diversity and collaboration patterns
+  </Step>
+  <Step>
+    Check if the repository owner actively commits or delegates development
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No Commits Displayed">
+    **Possible causes:**
+    - Empty repository (just created)
+    - Repository with restricted access
+    - API rate limit reached
+    
+    **Solution:**
+    - Check if the repository is empty on GitHub
+    - Verify the repository is public
+    - Add an API token to increase rate limits
+  </Accordion>
+
+  <Accordion title="Missing Author Avatars">
+    **Cause:** Commits made by authors without GitHub accounts or using email-only commits.
+    
+    **This is normal for:**
+    - Imported repositories from other platforms
+    - Commits made before GitHub account creation
+    - Commits from automated systems
+  </Accordion>
+
+  <Accordion title="Only Seeing 10 Commits">
+    **This is intentional:** GitScope displays the 10 most recent commits for quick overview.
+    
+    **To see more:**
+    - Click "Ver en GitHub" to access full commit history
+    - GitHub shows unlimited commit history
+  </Accordion>
+
+  <Accordion title="Panel Won't Close">
+    **Solutions:**
+    - Click the repository card again
+    - Click the X button in the panel header
+    - Search for a new user (resets the view)
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<Note>
+  **For Quick Assessment:**
+  - Check commit timestamps for activity level
+  - Read the 2-3 most recent commit messages
+  - Note author diversity
+  - Review the issue count in metadata
+</Note>
+
+<Tip>
+  **For Deep Analysis:**
+  - Click through to GitHub for full commit history
+  - Review commit diffs to understand code changes
+  - Check pull requests for collaboration quality
+  - Read issue discussions for community health
+</Tip>
+
+## What's Next?
+
+Now that you understand commit history:
+
+- Explore [Understanding Language Charts](/guides/understanding-charts)
+- Master [Filtering and Sorting](/guides/filtering-repos)
+- Return to [Getting Started](/guides/getting-started)

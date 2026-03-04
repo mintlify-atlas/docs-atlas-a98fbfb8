@@ -1,0 +1,301 @@
+---
+title: 'Filtering and Sorting Repositories'
+description: 'Learn how to filter repositories by stars and sort by different criteria'
+---
+
+GitScope provides powerful filtering and sorting capabilities to help you quickly find the most relevant repositories from any GitHub profile.
+
+## Repository Filtering
+
+### Filter by Star Count
+
+The star filter lets you focus on repositories with a minimum number of stars, helping you identify the most popular or impactful projects.
+
+<Steps>
+  <Step title="Locate the Filter Controls">
+    Find the filter section at the top of the repository grid, just below the "Repositorios" heading.
+  </Step>
+
+  <Step title="Set Minimum Stars">
+    Enter a number in the "Stars ≥" input field. The grid updates automatically as you type.
+    
+    <Tip>
+      Start with a low number and gradually increase to narrow your results. For example, try 10, then 50, then 100.
+    </Tip>
+  </Step>
+
+  <Step title="Review Filtered Results">
+    The repository count badge updates to show how many repositories match your filter.
+    
+    If no repositories meet the criteria, you'll see: "No hay repos con ≥ X ⭐"
+  </Step>
+</Steps>
+
+### Understanding Star Counts
+
+Stars on GitHub represent community interest and endorsement:
+
+- **0-10 stars**: Personal projects or early-stage work
+- **10-100 stars**: Projects gaining traction or niche tools
+- **100-1,000 stars**: Popular projects with active communities
+- **1,000+ stars**: Widely-used frameworks, libraries, or tools
+- **10,000+ stars**: Industry-standard or landmark projects
+
+<Note>
+  The star filter is cumulative with sorting. You can filter by stars and then sort the filtered results by any criteria.
+</Note>
+
+## Repository Sorting
+
+Sort repositories by different metrics to analyze profiles from various perspectives.
+
+### Available Sort Options
+
+<Accordion title="Recientes (Most Recent)">
+  **Default sorting option**
+  
+  Displays repositories by their last update time, with the most recently updated appearing first.
+  
+  **Best for:**
+  - Identifying actively maintained projects
+  - Finding current work
+  - Seeing what technologies the developer is currently using
+  
+  Time indicators show:
+  - "hoy" (today)
+  - "ayer" (yesterday)
+  - "hace Xd" (X days ago)
+  - "hace Xm" (X months ago)
+  - "hace Xa" (X years ago)
+</Accordion>
+
+<Accordion title="⭐ Stars (Most Popular)">
+  Sorts repositories by star count in descending order, showing the most starred projects first.
+  
+  **Best for:**
+  - Finding a developer's most popular work
+  - Identifying flagship projects
+  - Discovering community-endorsed tools
+  - Evaluating a developer's impact
+  
+  <Tip>
+    Combine star sorting with a minimum star filter to focus on tier-1 projects only.
+  </Tip>
+</Accordion>
+
+<Accordion title="🍴 Forks (Most Forked)">
+  Sorts repositories by fork count in descending order.
+  
+  **Best for:**
+  - Finding projects with active contributor communities
+  - Identifying frameworks or libraries widely adopted
+  - Seeing which projects other developers are building upon
+  - Evaluating code reusability
+  
+  <Note>
+    High fork counts often indicate educational value or extensibility. Developers fork projects to learn, customize, or contribute.
+  </Note>
+</Accordion>
+
+### How to Sort Repositories
+
+<Steps>
+  <Step title="Open the Sort Dropdown">
+    Click the dropdown menu on the right side of the filter controls (next to the star filter).
+  </Step>
+
+  <Step title="Select Your Sorting Method">
+    Choose from:
+    - Recientes
+    - ⭐ Stars
+    - 🍴 Forks
+    
+    The grid re-orders instantly.
+  </Step>
+
+  <Step title="Combine with Filtering">
+    Add a minimum star count to narrow your results before sorting.
+    
+    Example: Filter for "Stars ≥ 100" then sort by Forks to find popular, highly forked projects.
+  </Step>
+</Steps>
+
+## Repository Cards
+
+Each repository card displays comprehensive information:
+
+### Card Header
+
+- **Repository Name**: The full name of the project
+- **Fork Badge**: Appears if the repository is forked from another project
+- **Archived Badge**: Indicates the repository is no longer actively maintained
+
+<Warning>
+  Archived repositories are read-only. They won't receive updates or accept contributions.
+</Warning>
+
+### Card Body
+
+- **Description**: Project description (if provided by the repository owner)
+- **Language Tag**: Color-coded primary programming language
+- **Metrics Row**:
+  - ⭐ Star count (if greater than 0)
+  - 🍴 Fork count (if greater than 0)
+  - 🕐 Last update time (relative)
+
+### Language Colors
+
+GitScope uses standard GitHub language colors:
+
+- 🟨 JavaScript: Yellow
+- 🟦 TypeScript: Blue
+- 🟦 Python: Dark Blue
+- 🟧 Java: Orange
+- 🟥 Ruby: Red
+- 🟦 Go: Cyan
+- 🟫 Rust: Brown
+- 🟪 Kotlin: Purple
+- And many more...
+
+## Pagination
+
+Repositories are loaded 30 at a time to optimize performance.
+
+### Navigation Controls
+
+<Steps>
+  <Step title="View Current Page">
+    The page number is displayed in the center of the pagination bar at the bottom of the repository grid.
+  </Step>
+
+  <Step title="Navigate Between Pages">
+    - Click **Anterior** (Previous) to go back one page
+    - Click **Siguiente** (Next) to advance to the next page
+    
+    Buttons are automatically disabled when you reach the first or last page.
+  </Step>
+
+  <Step title="Understand Page Limits">
+    - Each page shows up to 30 repositories
+    - The "Siguiente" button is disabled when fewer than 30 repositories are returned
+    - Filters apply across all pages
+  </Step>
+</Steps>
+
+<Note>
+  When you navigate to a new page, the view automatically scrolls to the top for easier browsing.
+</Note>
+
+## Advanced Filtering Strategies
+
+### Finding Flagship Projects
+
+<Steps>
+  <Step>
+    Sort by **⭐ Stars** to see the most popular repositories first
+  </Step>
+  <Step>
+    Set the filter to **Stars ≥ 1000** to focus on widely-adopted projects
+  </Step>
+  <Step>
+    Click the top results to view commit history and confirm active development
+  </Step>
+</Steps>
+
+### Discovering Active Projects
+
+<Steps>
+  <Step>
+    Sort by **Recientes** to see recently updated repositories
+  </Step>
+  <Step>
+    Look for repositories updated "hoy" (today) or "ayer" (yesterday)
+  </Step>
+  <Step>
+    Click to view commit frequency and contributor activity
+  </Step>
+</Steps>
+
+### Identifying Learning Resources
+
+<Steps>
+  <Step>
+    Sort by **🍴 Forks** to find highly forked repositories
+  </Step>
+  <Step>
+    Set filter to **Stars ≥ 100** to ensure quality
+  </Step>
+  <Step>
+    Look for educational keywords in descriptions ("tutorial", "example", "course")
+  </Step>
+</Steps>
+
+### Researching Technology Stacks
+
+<Steps>
+  <Step>
+    Note the language tags on repository cards
+  </Step>
+  <Step>
+    Group mentally by color to see technology patterns
+  </Step>
+  <Step>
+    Cross-reference with the language analytics chart in the sidebar
+  </Step>
+</Steps>
+
+## Filtering Tips
+
+<AccordionGroup>
+  <Accordion title="Users with Many Repositories">
+    For profiles with hundreds of repositories:
+    
+    1. Start with a star filter of 50 or 100
+    2. Sort by stars to see top projects first
+    3. Review the first page before adjusting filters
+    4. Use pagination to explore tier-2 projects
+  </Accordion>
+
+  <Accordion title="Users with Few Repositories">
+    For profiles with less than 30 repositories:
+    
+    1. Keep filters at default (0 stars)
+    2. Sort by "Recientes" to see current activity
+    3. All repositories fit on one page
+    4. Review the complete body of work quickly
+  </Accordion>
+
+  <Accordion title="Finding Specific Project Types">
+    To locate specific types of projects:
+    
+    1. Use the language tags for visual scanning
+    2. Read repository descriptions for keywords
+    3. Check fork badges to identify derived work
+    4. Note archived badges to skip inactive projects
+  </Accordion>
+
+  <Accordion title="Comparing Similar Developers">
+    When analyzing multiple profiles:
+    
+    1. Use consistent filter settings across profiles
+    2. Note the total repository count (shown in badge)
+    3. Compare top-starred projects
+    4. Observe language diversity in the grid
+  </Accordion>
+</AccordionGroup>
+
+## Filter Persistence
+
+<Note>
+  Filter and sort settings reset when you search for a new user. This ensures each profile starts with a clean, default view.
+</Note>
+
+Your theme preference and API token are the only settings that persist across sessions.
+
+## What's Next?
+
+Now that you can filter and sort repositories effectively:
+
+- Learn about [Viewing Commit History](/guides/viewing-commits)
+- Explore [Understanding Language Charts](/guides/understanding-charts)
+- Return to [Getting Started](/guides/getting-started)

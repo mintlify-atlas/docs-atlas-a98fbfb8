@@ -1,0 +1,319 @@
+---
+title: 'Build Configuration and Process'
+description: 'Understanding Vite build configuration, output structure, and optimization for production'
+icon: 'hammer'
+---
+
+GitScope uses Vite as its build tool, providing fast development and optimized production builds. This guide explains the build configuration, process, and output structure.
+
+## Build Tool: Vite
+
+Vite is a modern build tool that offers:
+
+- Lightning-fast Hot Module Replacement (HMR) during development
+- Optimized production builds using Rollup
+- Native ES modules support
+- Built-in support for React, TypeScript, CSS modules, and more
+- Zero-config setup with sensible defaults
+
+## Vite Configuration
+
+The project's build configuration is defined in `vite.config.js`:
+
+```javascript vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/github-dashboard/',
+})
+```
+
+### Configuration Options
+
+<ParamField path="plugins" type="array">
+  Array of Vite plugins. The `@vitejs/plugin-react` plugin enables React Fast Refresh and JSX transformation.
+</ParamField>
+
+<ParamField path="base" type="string" default="/">
+  The base public path when served in production. Set to `/github-dashboard/` to match the GitHub Pages subdirectory. Must match the repository name when deploying to GitHub Pages.
+</ParamField>
+
+<Note>
+  The `base` option is critical for GitHub Pages deployments. It ensures all asset paths (JS, CSS, images) are correctly resolved when the app is hosted in a subdirectory.
+</Note>
+
+## Build Scripts
+
+The `package.json` defines several build-related scripts:
+
+```json package.json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist"
+  }
+}
+```
+
+### Script Descriptions
+
+<AccordionGroup>
+  <Accordion title="npm run dev" icon="code">
+    Starts the Vite development server with Hot Module Replacement (HMR).
+    
+    ```bash
+    npm run dev
+    ```
+    
+    - Runs on `http://localhost:5173` by default
+    - Provides instant feedback on code changes
+    - Shows detailed error messages in the browser
+    - Supports source maps for debugging
+  </Accordion>
+
+  <Accordion title="npm run build" icon="hammer">
+    Creates an optimized production build in the `dist` directory.
+    
+    ```bash
+    npm run build
+    ```
+    
+    Build process:
+    1. Cleans the `dist` directory
+    2. Transforms and bundles all source files
+    3. Minifies JavaScript and CSS
+    4. Optimizes assets (images, fonts, etc.)
+    5. Generates hashed filenames for cache busting
+    6. Creates source maps (optional)
+  </Accordion>
+
+  <Accordion title="npm run preview" icon="eye">
+    Previews the production build locally before deployment.
+    
+    ```bash
+    npm run preview
+    ```
+    
+    - Serves the `dist` directory on `http://localhost:4173`
+    - Simulates production environment
+    - Useful for testing before deploying
+    - Does not include HMR or development features
+  </Accordion>
+
+  <Accordion title="npm run deploy" icon="rocket">
+    Builds the project and deploys to GitHub Pages.
+    
+    ```bash
+    npm run deploy
+    ```
+    
+    This command:
+    1. Runs `npm run build` to create production assets
+    2. Uses `gh-pages -d dist` to publish the `dist` folder
+    3. Pushes to the `gh-pages` branch automatically
+  </Accordion>
+</AccordionGroup>
+
+## Build Output Structure
+
+The production build generates the following structure in the `dist` directory:
+
+```
+dist/
+├── index.html              # Entry HTML file with injected asset links
+├── assets/
+│   ├── index-[hash].js     # Main JavaScript bundle (minified)
+│   ├── index-[hash].css    # Compiled and minified CSS
+│   └── [asset]-[hash].svg  # Optimized SVG assets
+└── [other-static-files]    # Additional public assets
+```
+
+### Output Characteristics
+
+<ResponseField name="index.html" type="file">
+  The main HTML entry point with:
+  - Minified HTML
+  - Inline critical CSS (optional)
+  - Preload hints for faster loading
+  - Hashed asset references for cache busting
+</ResponseField>
+
+<ResponseField name="assets/*.js" type="bundle">
+  Optimized JavaScript bundles:
+  - Tree-shaken to remove unused code
+  - Minified with Terser
+  - Code-split by route or component (when configured)
+  - Hashed filenames for long-term caching
+</ResponseField>
+
+<ResponseField name="assets/*.css" type="stylesheet">
+  Compiled CSS with:
+  - CSS Modules transformed to scoped class names
+  - Minified and compressed
+  - Unused styles removed
+  - Hashed filenames
+</ResponseField>
+
+## Build Optimizations
+
+Vite applies several optimizations automatically:
+
+### Code Splitting
+
+- Vendor dependencies bundled separately
+- Dynamic imports create separate chunks
+- Reduces initial load time
+
+### Tree Shaking
+
+- Removes unused code from final bundle
+- Only includes imported functions and components
+- Significantly reduces bundle size
+
+### Minification
+
+- JavaScript minified with esbuild (fast) or Terser (smaller)
+- CSS minified with Lightning CSS
+- HTML whitespace removed
+
+### Asset Optimization
+
+- Images can be optimized with plugins
+- SVGs are inlined when small enough
+- Fonts are subset when possible
+
+### Cache Busting
+
+- All assets get content-based hashes in filenames
+- `index-a1b2c3d4.js` changes only when content changes
+- Enables long-term caching with `Cache-Control: max-age=31536000`
+
+## Build Performance
+
+Typical build times for GitScope:
+
+<CodeGroup>
+```bash Development Server Startup
+$ npm run dev
+vite v5.0.8 dev server running at:
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+
+  ready in 245 ms
+```
+
+```bash Production Build
+$ npm run build
+vite v5.0.8 building for production...
+✓ 127 modules transformed.
+dist/index.html                   0.45 kB │ gzip:  0.29 kB
+dist/assets/index-a7f3e8b9.css    4.32 kB │ gzip:  1.53 kB
+dist/assets/index-d8c4f2a1.js   148.67 kB │ gzip: 48.21 kB
+✓ built in 1.84s
+```
+</CodeGroup>
+
+## Build Analysis
+
+To analyze your bundle size and dependencies:
+
+<Steps>
+  <Step title="Install rollup-plugin-visualizer">
+    ```bash
+    npm install --save-dev rollup-plugin-visualizer
+    ```
+  </Step>
+
+  <Step title="Update vite.config.js">
+    ```javascript vite.config.js
+    import { defineConfig } from 'vite'
+    import react from '@vitejs/plugin-react'
+    import { visualizer } from 'rollup-plugin-visualizer'
+
+    export default defineConfig({
+      plugins: [
+        react(),
+        visualizer({ open: true })
+      ],
+      base: '/github-dashboard/',
+    })
+    ```
+  </Step>
+
+  <Step title="Run Build">
+    ```bash
+    npm run build
+    ```
+    
+    A browser window will open showing an interactive visualization of your bundle composition.
+  </Step>
+</Steps>
+
+## Environment-Specific Builds
+
+Vite uses environment variables prefixed with `VITE_` that are exposed to your client code:
+
+```bash
+# .env.production
+VITE_API_URL=https://api.github.com
+```
+
+```javascript src/config.js
+const apiUrl = import.meta.env.VITE_API_URL
+```
+
+<Warning>
+  GitScope does not currently use environment variables, as all configuration is handled through the GitHub API token stored in localStorage. If you add environment variables, never commit sensitive data like tokens or secrets.
+</Warning>
+
+## Troubleshooting Build Issues
+
+### Build Fails with Memory Error
+
+```bash
+JavaScript heap out of memory
+```
+
+Increase Node.js memory limit:
+
+```json package.json
+{
+  "scripts": {
+    "build": "node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build"
+  }
+}
+```
+
+### Assets Not Loading in Production
+
+Verify the `base` path in `vite.config.js` matches your deployment subdirectory.
+
+### CSS Modules Not Working
+
+Ensure files use the `.module.css` extension:
+
+- `Header.module.css` ✓
+- `Header.css` ✗
+
+### Large Bundle Size
+
+1. Use `rollup-plugin-visualizer` to identify large dependencies
+2. Consider code splitting with dynamic imports
+3. Remove unused dependencies from `package.json`
+4. Use lighter alternatives for heavy libraries
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="GitHub Pages Deployment" icon="github" href="/deployment/github-pages">
+    Deploy your built application to GitHub Pages
+  </Card>
+  <Card title="Environment Setup" icon="wrench" href="/deployment/environment-setup">
+    Configure your local development environment
+  </Card>
+</CardGroup>

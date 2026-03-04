@@ -1,0 +1,212 @@
+---
+title: 'Getting Started with GitScope'
+description: 'Complete walkthrough of analyzing GitHub profiles with GitScope'
+---
+
+GitScope is a powerful dashboard for analyzing GitHub profiles in real-time. View repositories, commit history, language analytics, and key metrics from a clean, fast interface.
+
+## Quick Start
+
+<Steps>
+  <Step title="Search for a GitHub User">
+    Enter any public GitHub username in the search bar at the top of the page. You can type the username and press **Enter** or click the **Analizar** button.
+    
+    <Tip>
+      Try one of the suggested usernames like `torvalds`, `gvanrossum`, or `sindresorhus` to see GitScope in action immediately.
+    </Tip>
+  </Step>
+
+  <Step title="View the Profile Dashboard">
+    Once the search completes, you'll see:
+    
+    - **User Profile Card** (left sidebar): Avatar, bio, company, location, social links, and 4 key metrics
+    - **Language Analytics Chart** (left sidebar): Donut chart showing the most-used programming languages
+    - **Repository Grid** (main area): All public repositories with filtering and sorting options
+  </Step>
+
+  <Step title="Explore Repositories">
+    The repository grid loads automatically with 30 repositories per page. Each card shows:
+    
+    - Repository name and description
+    - Primary programming language
+    - Star count and fork count
+    - Last update time
+    
+    Click on any repository card to view its recent commit history.
+  </Step>
+
+  <Step title="View Commit History">
+    When you click a repository, a commit panel opens below showing:
+    
+    - The 10 most recent commits
+    - Commit messages and authors
+    - Commit timestamps and SHA hashes
+    - Repository metadata (stars, forks, issues, size, license)
+    
+    Click the repository again or the **X** button to close the panel.
+  </Step>
+</Steps>
+
+## Understanding the Interface
+
+### Header Bar
+
+The top navigation bar contains several important controls:
+
+- **GitScope Logo**: Returns you to the home screen
+- **Rate Limit Indicator**: Shows your remaining GitHub API requests (changes color based on usage)
+- **Token API Button**: Opens the API token configuration modal
+- **Theme Toggle**: Switches between light and dark mode
+
+<Note>
+  The rate limit indicator uses color coding:
+  - 🟢 Green: More than 50% of requests remaining
+  - 🟡 Yellow: Between 20% and 50% remaining
+  - 🔴 Red: Less than 20% remaining
+</Note>
+
+### User Profile Card
+
+The left sidebar displays comprehensive user information:
+
+- **Profile Details**: Avatar, name, username, and bio
+- **Contact Info**: Company, location, website, and Twitter handle (when available)
+- **Activity Metrics**:
+  - Total public repositories
+  - Follower count
+  - Following count
+  - Public gists
+
+Click the username link to open the user's GitHub profile in a new tab.
+
+### Repository Grid
+
+The main content area shows all repositories with:
+
+- **Visual Indicators**: Fork and archived badges
+- **Language Tags**: Color-coded primary language
+- **Engagement Metrics**: Stars, forks, and last update time
+- **Pagination Controls**: Navigate through pages of 30 repositories
+
+<Tip>
+  Selected repositories are highlighted with a colored border to show which commit panel is currently active.
+</Tip>
+
+## Adding a GitHub API Token
+
+By default, GitHub limits unauthenticated requests to **60 per hour**. Adding a personal access token increases this to **5,000 requests per hour**.
+
+<Steps>
+  <Step title="Open the Token Modal">
+    Click the **Token API** button in the header bar to open the token configuration modal.
+  </Step>
+
+  <Step title="Generate a GitHub Token">
+    Click the "Crear token en GitHub" link in the modal to open GitHub's token creation page.
+    
+    You'll need to select these scopes:
+    - ✅ `public_repo`
+    - ✅ `read:user`
+    
+    Name your token something descriptive like "GitScope Dashboard".
+  </Step>
+
+  <Step title="Save the Token">
+    Copy the generated token (starts with `ghp_`) and paste it into the input field in GitScope.
+    
+    Click **Guardar** to save the token.
+  </Step>
+</Steps>
+
+<Warning>
+  Your API token is stored only in your browser's localStorage. It's never transmitted to any server except GitHub's API. Keep your token secure and never share it publicly.
+</Warning>
+
+## Switching Themes
+
+GitScope supports both light and dark themes:
+
+1. Click the moon 🌙 or sun ☀️ icon in the header
+2. Your preference is automatically saved
+3. The theme persists across sessions
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Optimizing API Usage">
+    - Add an API token to avoid hitting rate limits
+    - Monitor the rate limit indicator in the header
+    - The reset time is shown when hovering over the rate limit display
+  </Accordion>
+
+  <Accordion title="Efficient Profile Analysis">
+    - Use filters to narrow down repositories before browsing
+    - Sort by stars to see the most popular projects first
+    - The language chart analyzes the top 12 repositories automatically
+  </Accordion>
+
+  <Accordion title="Understanding Metrics">
+    - Repository sizes are displayed in MB (megabytes)
+    - Time indicators use relative format: "hoy" (today), "ayer" (yesterday), "hace Xd" (X days ago)
+    - Fork badges indicate repositories copied from other projects
+  </Accordion>
+</AccordionGroup>
+
+## Common Workflows
+
+### Discovering New Projects
+
+1. Search for a well-known developer in your technology area
+2. Sort their repositories by stars to see popular projects
+3. Click repositories to view recent commit activity
+4. Use the "Ver en GitHub" button to explore the full repository
+
+### Comparing Developer Profiles
+
+1. Search for the first developer and note their metrics
+2. Observe the language distribution and repository count
+3. Search for the second developer to compare
+4. Look at follower counts, repository counts, and dominant languages
+
+### Researching Technologies
+
+1. Search for the creator of a framework or library
+2. View the language analytics chart to see their technology stack
+3. Filter repositories by stars to find their most impactful projects
+4. Review commit history to see development activity
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="User Not Found Error">
+    - Verify the username is spelled correctly
+    - Ensure the user has a public GitHub profile
+    - Check that the username exists on github.com
+  </Accordion>
+
+  <Accordion title="Rate Limit Exceeded">
+    - Add a GitHub API token to increase your limit
+    - Wait until the reset time shown in the rate limit indicator
+    - The limit resets hourly
+  </Accordion>
+
+  <Accordion title="Slow Loading">
+    - Large profiles with many repositories may take longer to load
+    - The language chart fetches data for the top 12 repositories in parallel
+    - Results are cached to improve performance on subsequent views
+  </Accordion>
+
+  <Accordion title="Empty Commit Panel">
+    - Some repositories may have restricted commit history
+    - Empty repositories show "No hay commits disponibles"
+    - Check the repository on GitHub for more information
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you understand the basics:
+
+- Learn about [Filtering and Sorting Repositories](/guides/filtering-repos)
+- Explore [Viewing Commit History](/guides/viewing-commits)
+- Master [Understanding Language Charts](/guides/understanding-charts)

@@ -1,0 +1,156 @@
+---
+title: SearchBar Component
+description: Hero section with search input for GitHub username lookup
+---
+
+## Overview
+
+The `SearchBar` component provides the main search interface for GitScope. It includes a hero section with title and description, plus a search form that accepts GitHub usernames.
+
+**Location in UI**: Below the header, at the top of the main content area
+
+**Source**: `~/workspace/source/src/components/SearchBar.jsx`
+
+## Props
+
+<ParamField path="onSearch" type="function" required>
+  Callback function invoked when the search form is submitted with a valid username.
+  
+  ```javascript
+  onSearch: (username: string) => void
+  ```
+  
+  The username is trimmed of whitespace before being passed to the callback.
+</ParamField>
+
+<ParamField path="loading" type="boolean" required>
+  Indicates whether a search operation is currently in progress. When `true`, the submit button displays a spinner and is disabled.
+</ParamField>
+
+## Usage Example
+
+From `App.jsx:83`:
+
+```jsx
+<SearchBar onSearch={search} loading={loading && !user} />
+```
+
+The search callback from `App.jsx:35-56`:
+
+```jsx
+const search = useCallback(async (username) => {
+  setLoading(true)
+  setError(null)
+  setUser(null)
+  setRepos([])
+  setSelectedRepo(null)
+  setPage(1)
+  setCurrentUsername(username)
+
+  try {
+    const [userData, reposData] = await Promise.all([
+      getUser(username),
+      getRepos(username, 1, PER_PAGE),
+    ])
+    setUser(userData)
+    setRepos(reposData)
+    setHasMore(reposData.length === PER_PAGE)
+  } catch (e) {
+    setError(e.message)
+  } finally {
+    setLoading(false)
+  }
+}, [getUser, getRepos])
+```
+
+## Key Features
+
+### Hero Section
+
+Displays the main title and subtitle:
+
+```jsx
+<div className={styles.hero}>
+  <h1 className={styles.title}>Analiza cualquier perfil de GitHub</h1>
+  <p className={styles.sub}>Repos, commits, lenguajes y métricas en un vistazo</p>
+</div>
+```
+
+### Search Form
+
+Handles form submission and input validation:
+
+```jsx
+const handleSubmit = (e) => {
+  e.preventDefault()
+  const v = value.trim()
+  if (v) onSearch(v)
+}
+```
+
+### Input Field
+
+Features:
+- Search icon indicator
+- Placeholder with example usernames
+- Auto-complete disabled
+- Spell-check disabled
+
+```jsx
+<div className={styles.inputWrap}>
+  <Search size={18} className={styles.icon} />
+  <input
+    className={styles.input}
+    type="text"
+    placeholder="Buscar usuario (ej: torvalds, gvanrossum...)"
+    value={value}
+    onChange={e => setValue(e.target.value)}
+    autoComplete="off"
+    spellCheck={false}
+  />
+</div>
+```
+
+### Submit Button
+
+Shows loading state with spinner:
+
+```jsx
+<button className={styles.btn} type="submit" disabled={loading || !value.trim()}>
+  {loading ? <span className="spinner" /> : 'Analizar'}
+</button>
+```
+
+**Disabled when**:
+- `loading` is `true`
+- Input value is empty or only whitespace
+
+## Implementation Details
+
+### State Management
+
+Uses local state to track input value:
+
+```jsx
+const [value, setValue] = useState('')
+```
+
+### Form Validation
+
+Validates input before submission:
+1. Prevents default form submission
+2. Trims whitespace from input
+3. Only calls `onSearch` if value is non-empty
+
+### Icons
+
+Uses Lucide React's `Search` icon for visual indicator.
+
+### Input Attributes
+
+- `autoComplete="off"` - Prevents browser autocomplete
+- `spellCheck={false}` - Disables spell checking for usernames
+
+## Styling
+
+Imports modular CSS from `SearchBar.module.css` for component-scoped styles.

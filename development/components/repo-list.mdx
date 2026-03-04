@@ -1,0 +1,296 @@
+---
+title: RepoList Component
+description: Paginated grid of repository cards with filtering, sorting, and selection capabilities
+---
+
+## Overview
+
+The `RepoList` component displays a user's GitHub repositories in a filterable, sortable grid. It includes star filtering, multiple sort options, pagination controls, and repository selection for viewing commits.
+
+**Location in UI**: Main content area, right side of the layout when user data is loaded
+
+**Source**: `~/workspace/source/src/components/RepoList.jsx`
+
+## Props
+
+<ParamField path="repos" type="array" required>
+  Array of repository objects from the GitHub API.
+  
+  ```typescript
+  repos: Array<{
+    id: number,
+    name: string,
+    description: string | null,
+    language: string | null,
+    stargazers_count: number,
+    forks_count: number,
+    watchers_count: number,
+    updated_at: string,        // ISO date string
+    fork: boolean,
+    archived: boolean
+  }>
+  ```
+</ParamField>
+
+<ParamField path="loading" type="boolean" required>
+  Indicates whether repositories are currently being fetched. Shows skeleton loaders when `true`.
+</ParamField>
+
+<ParamField path="onSelectRepo" type="function" required>
+  Callback invoked when a repository card is clicked.
+  
+  ```javascript
+  onSelectRepo: (repo: object) => void
+  ```
+</ParamField>
+
+<ParamField path="selectedRepo" type="object">
+  Currently selected repository object. Used to highlight the selected card.
+</ParamField>
+
+<ParamField path="page" type="number" required>
+  Current page number (1-indexed).
+</ParamField>
+
+<ParamField path="setPage" type="function" required>
+  Callback to update the current page.
+  
+  ```javascript
+  setPage: (page: number | ((prevPage: number) => number)) => void
+  ```
+</ParamField>
+
+<ParamField path="hasMore" type="boolean" required>
+  Indicates whether more pages are available. Controls the "Next" button state.
+</ParamField>
+
+## Usage Example
+
+From `App.jsx:120-128`:
+
+```jsx
+<RepoList
+  repos={repos}
+  loading={loading}
+  onSelectRepo={r => setSelectedRepo(prev => prev?.id === r.id ? null : r)}
+  selectedRepo={selectedRepo}
+  page={page}
+  setPage={setPage}
+  hasMore={hasMore}
+/>
+```
+
+## Key Features
+
+### Star Filtering
+
+Filter repositories by minimum star count:
+
+```jsx
+const [minStars, setMinStars] = useState(0)
+
+const filtered = repos
+  .filter(r => r.stargazers_count >= minStars)
+  // ... sorting
+```
+
+Input control:
+
+```jsx
+<div className={styles.filterGroup}>
+  <Filter size={13} />
+  <span>Stars ≥</span>
+  <input
+    type="number" min="0"
+    value={minStars}
+    onChange={e => setMinStars(Math.max(0, +e.target.value))}
+    className={styles.starsInput}
+  />
+</div>
+```
+
+### Sorting Options
+
+Three sort modes:
+
+```jsx
+const [sort, setSort] = useState('updated')
+
+const filtered = repos
+  .filter(r => r.stargazers_count >= minStars)
+  .sort((a, b) => {
+    if (sort === 'stars') return b.stargazers_count - a.stargazers_count
+    if (sort === 'forks') return b.forks_count - a.forks_count
+    return new Date(b.updated_at) - new Date(a.updated_at)
+  })
+```
+
+- **updated** (default): Most recently updated first
+- **stars**: Highest star count first
+- **forks**: Most forked first
+
+### Repository Cards
+
+Each card displays:
+- Repository name
+- Badges (fork, archived)
+- Description
+- Language indicator
+- Star count
+- Fork count
+- Last update time
+
+```jsx
+<button
+  key={repo.id}
+  className={`${styles.repoCard} ${selectedRepo?.id === repo.id ? styles.selected : ''} fade-up`}
+  style={{ animationDelay: `${i * 0.03}s` }}
+  onClick={() => onSelectRepo(repo)}
+>
+  <div className={styles.repoTop}>
+    <span className={styles.repoName}>{repo.name}</span>
+    {repo.fork && <span className={styles.badge}>fork</span>}
+    {repo.archived && <span className={`${styles.badge} ${styles.archived}`}>archivado</span>}
+  </div>
+  {repo.description && (
+    <p className={styles.desc}>{repo.description}</p>
+  )}
+  <div className={styles.repoMeta}>
+    {repo.language && <LangDot lang={repo.language} />}
+    {repo.stargazers_count > 0 && (
+      <span className={styles.metaItem}>
+        <Star size={12} />{repo.stargazers_count.toLocaleString()}
+      </span>
+    )}
+    {repo.forks_count > 0 && (
+      <span className={styles.metaItem}>
+        <GitFork size={12} />{repo.forks_count}
+      </span>
+    )}
+    <span className={`${styles.metaItem} ${styles.time}`}>
+      <Clock size={12} />{timeAgo(repo.updated_at)}
+    </span>
+  </div>
+</button>
+```
+
+### Pagination
+
+Navigate between pages of repositories:
+
+```jsx
+<div className={styles.pagination}>
+  <button
+    className={styles.pageBtn}
+    onClick={() => setPage(p => Math.max(1, p - 1))}
+    disabled={page === 1}
+  >
+    <ChevronLeft size={16} /> Anterior
+  </button>
+  <span className={styles.pageInfo}>Página {page}</span>
+  <button
+    className={styles.pageBtn}
+    onClick={() => setPage(p => p + 1)}
+    disabled={!hasMore}
+  >
+    Siguiente <ChevronRight size={16} />
+  </button>
+</div>
+```
+
+### Loading State
+
+Shows skeleton cards while loading:
+
+```jsx
+{loading ? (
+  <div className={styles.grid}>
+    {[1,2,3,4,5,6].map(i => (
+      <div key={i} className={`skeleton ${styles.skCard}`} />
+    ))}
+  </div>
+) : (
+  // ... actual content
+)}
+```
+
+### Empty State
+
+Displays message when filter excludes all repos:
+
+```jsx
+{filtered.length === 0 && repos.length > 0 && (
+  <div className={styles.empty}>No hay repos con ≥ {minStars} ⭐</div>
+)}
+```
+
+## Helper Components
+
+### LangDot
+
+Language indicator with color coding:
+
+```jsx
+const LANG_COLORS = {
+  JavaScript: '#f7df1e', TypeScript: '#3178c6', Python: '#3572a5',
+  Java: '#b07219', 'C++': '#f34b7d', C: '#555555', Go: '#00add8',
+  Rust: '#dea584', PHP: '#4f5d95', Ruby: '#701516', Swift: '#fa7343',
+  Kotlin: '#a97bff', Dart: '#00b4ab', Shell: '#89e051', HTML: '#e34c26',
+  CSS: '#563d7c', Vue: '#41b883', Scala: '#dc322f', Haskell: '#5e5086',
+}
+
+function LangDot({ lang }) {
+  const color = LANG_COLORS[lang] || 'var(--text-dim)'
+  return <span className={styles.langDot} style={{ background: color }} title={lang}>{lang}</span>
+}
+```
+
+### timeAgo
+
+Formats timestamps as relative time:
+
+```jsx
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr)
+  const d = Math.floor(diff / 86400000)
+  if (d === 0) return 'hoy'
+  if (d === 1) return 'ayer'
+  if (d < 30) return `hace ${d}d`
+  const m = Math.floor(d / 30)
+  if (m < 12) return `hace ${m}m`
+  return `hace ${Math.floor(m / 12)}a`
+}
+```
+
+## Implementation Details
+
+### State Management
+
+Local state for filtering and sorting:
+
+```jsx
+const [minStars, setMinStars] = useState(0)
+const [sort, setSort] = useState('updated')
+```
+
+### Animation
+
+Staggered fade-in animation:
+
+```jsx
+style={{ animationDelay: `${i * 0.03}s` }}
+```
+
+### Icons
+
+From Lucide React:
+- `Star` - Star count
+- `GitFork` - Fork count
+- `Eye` - Watcher count
+- `Clock` - Last update
+- `Filter` - Filter icon
+- `ChevronLeft`/`ChevronRight` - Pagination arrows
+
+### Styling
+
+Imports modular CSS from `RepoList.module.css` for component-scoped styles.

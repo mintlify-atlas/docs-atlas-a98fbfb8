@@ -1,0 +1,192 @@
+---
+title: 'User Search'
+description: 'Search and analyze GitHub user profiles with real-time data'
+icon: 'search'
+---
+
+## Overview
+
+GitScope's user search feature allows you to quickly find and analyze any GitHub user's profile. Simply enter a username to view comprehensive statistics, repositories, and activity metrics.
+
+<Note>
+  The search validates input in real-time and only enables the search button when a valid username is entered.
+</Note>
+
+## How It Works
+
+The search interface provides an intuitive experience for finding GitHub users:
+
+1. **Enter a username** in the search field
+2. **Click "Analizar"** to fetch the user's data
+3. **View results** including profile info, repositories, and language statistics
+
+### Search Bar Component
+
+The search functionality is powered by a React component that handles form validation and submission:
+
+```jsx SearchBar.jsx
+import { useState } from 'react'
+import { Search } from 'lucide-react'
+
+export function SearchBar({ onSearch, loading }) {
+  const [value, setValue] = useState('')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const v = value.trim()
+    if (v) onSearch(v)
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="input-wrap">
+        <Search size={18} />
+        <input
+          type="text"
+          placeholder="Buscar usuario (ej: torvalds, gvanrossum...)"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </div>
+      <button type="submit" disabled={loading || !value.trim()}>
+        {loading ? <span className="spinner" /> : 'Analizar'}
+      </button>
+    </form>
+  )
+}
+```
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Input Validation" icon="shield-check">
+    Automatically trims whitespace and disables the submit button when input is empty
+  </Card>
+  <Card title="Loading States" icon="loader">
+    Shows a spinner during search to provide visual feedback
+  </Card>
+  <Card title="Smart Autocomplete" icon="sparkles">
+    Disables browser autocomplete for a cleaner search experience
+  </Card>
+  <Card title="Suggested Users" icon="users">
+    Quick-access buttons for popular developers like torvalds, gvanrossum, and more
+  </Card>
+</CardGroup>
+
+## User Profile Display
+
+Once a user is found, GitScope displays a comprehensive profile card with:
+
+<Accordion title="Profile Information">
+  - **Avatar and username** with link to GitHub profile
+  - **Bio** and display name
+  - **Location, company, website** and social links
+  - **Key metrics**: repositories, followers, following, gists
+</Accordion>
+
+### UserCard Component Structure
+
+```jsx UserCard.jsx
+export function UserCard({ user }) {
+  return (
+    <div className="card">
+      <div className="top">
+        <img src={user.avatar_url} alt={user.login} />
+        <div className="info">
+          <h2>{user.name || user.login}</h2>
+          <a href={user.html_url} target="_blank">@{user.login}</a>
+          {user.bio && <p>{user.bio}</p>}
+          
+          {/* Meta information */}
+          {user.company && <span>{user.company}</span>}
+          {user.location && <span>{user.location}</span>}
+          {user.blog && <a href={user.blog}>{user.blog}</a>}
+        </div>
+      </div>
+      
+      <div className="stats">
+        <Stat label="Repositorios" value={user.public_repos} />
+        <Stat label="Seguidores" value={user.followers} />
+        <Stat label="Siguiendo" value={user.following} />
+        <Stat label="Gists" value={user.public_gists} />
+      </div>
+    </div>
+  )
+}
+```
+
+<Tip>
+  All external links (GitHub profile, website, Twitter) automatically open in a new tab for seamless browsing.
+</Tip>
+
+## API Integration
+
+The search feature uses GitHub's REST API through a custom hook:
+
+```javascript useGitHub.js
+const getUser = useCallback(
+  (username) => request(`/users/${username}`),
+  [request]
+)
+
+// Usage in component
+const search = async (username) => {
+  try {
+    const userData = await getUser(username)
+    setUser(userData)
+  } catch (e) {
+    setError(e.message)
+  }
+}
+```
+
+### Error Handling
+
+<Note>
+  The search gracefully handles errors including:
+  - **User not found** (404 errors)
+  - **Rate limit exceeded** (403 errors)
+  - **Network failures** with user-friendly messages
+</Note>
+
+## Best Practices
+
+<Steps>
+  <Step title="Use Exact Usernames">
+    Enter the exact GitHub username for accurate results. The search is case-sensitive.
+  </Step>
+  
+  <Step title="Try Suggested Users">
+    Click on suggested usernames (torvalds, gvanrossum, etc.) to see example profiles.
+  </Step>
+  
+  <Step title="Monitor Rate Limits">
+    Check the rate limit indicator in the header. Add a GitHub token for higher limits (60 → 5,000 requests/hour).
+  </Step>
+</Steps>
+
+<Warning>
+  Without authentication, GitHub limits you to 60 requests per hour. Add a personal access token to increase this to 5,000 requests/hour.
+</Warning>
+
+## UI/UX Features
+
+- **Responsive design** adapts to all screen sizes
+- **Fade-in animations** for smooth content loading
+- **Skeleton loaders** during data fetching
+- **Accessibility** with proper ARIA labels and semantic HTML
+
+## What's Next?
+
+After searching for a user, explore:
+
+<CardGroup cols={2}>
+  <Card title="Repository Explorer" icon="folder" href="/features/repository-explorer">
+    Browse and filter the user's repositories
+  </Card>
+  <Card title="Language Analytics" icon="chart-pie" href="/features/language-analytics">
+    View programming language distribution
+  </Card>
+</CardGroup>

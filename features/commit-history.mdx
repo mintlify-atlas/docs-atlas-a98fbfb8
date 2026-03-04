@@ -1,0 +1,334 @@
+---
+title: 'Commit History'
+description: 'View recent commits with author information and repository statistics'
+icon: 'git-commit'
+---
+
+## Overview
+
+The Commit History viewer provides detailed insight into a repository's recent activity. View commit messages, authors, timestamps, and comprehensive repository statistics in an elegant sliding panel.
+
+<Note>
+  The commit panel automatically fetches the 10 most recent commits when you select a repository from the explorer.
+</Note>
+
+## Opening the Commit Panel
+
+The commit history panel appears when you click on any repository card:
+
+```javascript App.jsx
+const [selectedRepo, setSelectedRepo] = useState(null)
+
+<RepoList
+  onSelectRepo={r => setSelectedRepo(prev => prev?.id === r.id ? null : r)}
+  selectedRepo={selectedRepo}
+/>
+
+{selectedRepo && (
+  <CommitPanel
+    repo={selectedRepo}
+    username={user.login}
+    getCommits={getCommits}
+    onClose={() => setSelectedRepo(null)}
+  />
+)}
+```
+
+<Tip>
+  Click a repository card once to open commits, click again to close. The panel smoothly animates in with a fade-up effect.
+</Tip>
+
+## Panel Structure
+
+The commit panel consists of three main sections:
+
+<Steps>
+  <Step title="Header Section">
+    Repository name, GitHub link, and close button
+  </Step>
+  
+  <Step title="Commit List">
+    Scrollable list of recent commits with author info
+  </Step>
+  
+  <Step title="Repository Stats">
+    Quick view of stars, forks, issues, size, and license
+  </Step>
+</Steps>
+
+### Panel Header
+
+```jsx CommitPanel.jsx
+<div className="panel-header">
+  <div className="panel-title">
+    <GitCommit size={16} style={{ color: 'var(--accent)' }} />
+    <span>Commits recientes en <strong>{repo.name}</strong></span>
+  </div>
+  
+  <div className="panel-actions">
+    <a href={repo.html_url} target="_blank" rel="noreferrer">
+      <ExternalLink size={14} /> Ver en GitHub
+    </a>
+    <button onClick={onClose}>
+      <X size={16} />
+    </button>
+  </div>
+</div>
+```
+
+## Commit Display
+
+Each commit is rendered as a clickable card linking to GitHub:
+
+```jsx CommitPanel.jsx
+{commits.map((c, i) => {
+  const msg = c.commit.message.split('\n')[0]
+  const sha = c.sha.slice(0, 7)
+  const author = c.commit.author
+  
+  return (
+    <a
+      key={c.sha}
+      href={c.html_url}
+      target="_blank"
+      rel="noreferrer"
+      className="commit"
+      style={{ animationDelay: `${i * 0.04}s` }}
+    >
+      <div className="commit-left">
+        {c.author?.avatar_url && (
+          <img src={c.author.avatar_url} className="avatar" alt="" />
+        )}
+        <div className="commit-info">
+          <span className="message">{msg}</span>
+          <span className="commit-meta">
+            {author.name} · {timeAgo(author.date)}
+          </span>
+        </div>
+      </div>
+      <code className="sha">{sha}</code>
+    </a>
+  )
+})}
+```
+
+### Commit Information
+
+<CardGroup cols={2}>
+  <Card title="Commit Message" icon="message-square">
+    First line of the commit message (truncated for multi-line commits)
+  </Card>
+  <Card title="Author Avatar" icon="user">
+    GitHub profile picture of the commit author
+  </Card>
+  <Card title="Author Name" icon="id-card">
+    Full name of the person who made the commit
+  </Card>
+  <Card title="Commit SHA" icon="hash">
+    Short hash (first 7 characters) for commit identification
+  </Card>
+  <Card title="Timestamp" icon="clock">
+    Human-readable time since commit (e.g., "hace 2d")
+  </Card>
+  <Card title="Direct Link" icon="external-link">
+    Click any commit to view full details on GitHub
+  </Card>
+</CardGroup>
+
+## Time Formatting
+
+Commit timestamps use relative time for better readability:
+
+```javascript CommitPanel.jsx
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr)
+  const d = Math.floor(diff / 86400000)
+  
+  if (d === 0) return 'hoy'
+  if (d === 1) return 'ayer'
+  if (d < 30) return `hace ${d}d`
+  
+  const m = Math.floor(d / 30)
+  if (m < 12) return `hace ${m}m`
+  return `hace ${Math.floor(m / 12)}a`
+}
+```
+
+<Accordion title="Time Format Examples">
+  - **hoy** - Committed today
+  - **ayer** - Committed yesterday
+  - **hace 5d** - Committed 5 days ago
+  - **hace 3m** - Committed 3 months ago
+  - **hace 2a** - Committed 2 years ago
+</Accordion>
+
+## Repository Statistics
+
+The panel footer displays key repository metrics:
+
+```jsx CommitPanel.jsx
+<div className="repo-stats">
+  {repo.stargazers_count > 0 && (
+    <span className="stat">⭐ {repo.stargazers_count.toLocaleString()}</span>
+  )}
+  {repo.forks_count > 0 && (
+    <span className="stat">🍴 {repo.forks_count}</span>
+  )}
+  {repo.open_issues_count > 0 && (
+    <span className="stat">🐛 {repo.open_issues_count} issues</span>
+  )}
+  {repo.language && (
+    <span className="stat">📦 {repo.language}</span>
+  )}
+  {repo.size > 0 && (
+    <span className="stat">💾 {(repo.size / 1024).toFixed(1)} MB</span>
+  )}
+  {repo.license?.spdx_id && (
+    <span className="stat">📄 {repo.license.spdx_id}</span>
+  )}
+</div>
+```
+
+### Available Statistics
+
+<Accordion title="Stars (⭐)">
+  Number of users who have starred the repository. Hidden if count is 0.
+</Accordion>
+
+<Accordion title="Forks (🍴)">
+  Number of times the repository has been forked. Hidden if count is 0.
+</Accordion>
+
+<Accordion title="Open Issues (🐛)">
+  Current count of open issues. Hidden if no open issues.
+</Accordion>
+
+<Accordion title="Primary Language (📦)">
+  Main programming language used in the repository.
+</Accordion>
+
+<Accordion title="Repository Size (💾)">
+  Total size of the repository in megabytes (converted from KB).
+</Accordion>
+
+<Accordion title="License (📄)">
+  SPDX identifier for the repository license (e.g., MIT, Apache-2.0).
+</Accordion>
+
+## Loading States
+
+While fetching commits, the panel shows skeleton loaders:
+
+```jsx CommitPanel.jsx
+{loading && (
+  <div className="load-list">
+    {[1,2,3,4,5].map(i => (
+      <div key={i} className="skeleton sk-commit" />
+    ))}
+  </div>
+)}
+```
+
+<Note>
+  Skeleton loaders match the size and shape of actual commit cards for a smooth loading experience.
+</Note>
+
+## Error Handling
+
+The panel gracefully handles API errors:
+
+```jsx CommitPanel.jsx
+const [error, setError] = useState(null)
+
+useEffect(() => {
+  if (!repo) return
+  setLoading(true)
+  setError(null)
+  setCommits([])
+  
+  getCommits(username, repo.name)
+    .then(data => { setCommits(data); setLoading(false) })
+    .catch(e => { setError(e.message); setLoading(false) })
+}, [repo, username])
+
+{error && <div className="error">{error}</div>}
+```
+
+<Warning>
+  If commits fail to load due to rate limiting or permissions, an error message is displayed. Try adding a GitHub token for better access.
+</Warning>
+
+## Empty States
+
+For repositories with no accessible commits:
+
+```jsx
+{!loading && !error && commits.length === 0 && (
+  <div className="empty">No hay commits disponibles</div>
+)}
+```
+
+## Animation Effects
+
+Commits fade in sequentially for a polished experience:
+
+```jsx
+style={{ animationDelay: `${i * 0.04}s` }}
+```
+
+<Tip>
+  Each commit animates in 0.04 seconds after the previous one, creating a smooth cascading effect.
+</Tip>
+
+## API Integration
+
+Commits are fetched using GitHub's REST API:
+
+```javascript useGitHub.js
+const getCommits = useCallback(
+  (owner, repo, per_page = 10) =>
+    request(`/repos/${owner}/${repo}/commits`, { per_page }),
+  [request]
+)
+```
+
+<Note>
+  By default, only the 10 most recent commits are fetched to optimize performance and API usage.
+</Note>
+
+## Best Practices
+
+<Steps>
+  <Step title="Check Recent Activity">
+    Review commit timestamps to gauge how actively maintained the repository is
+  </Step>
+  
+  <Step title="Read Commit Messages">
+    First-line messages give quick insight into recent changes and development focus
+  </Step>
+  
+  <Step title="Click Through to GitHub">
+    View full commit diffs and file changes by clicking any commit
+  </Step>
+  
+  <Step title="Review Repository Stats">
+    Use the footer metrics to assess repository size, issues, and licensing
+  </Step>
+</Steps>
+
+## Keyboard Navigation
+
+<Tip>
+  Press ESC to close the commit panel, or click the X button in the header.
+</Tip>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Repository Explorer" icon="folder-open" href="/features/repository-explorer">
+    Browse and filter repositories to view commits
+  </Card>
+  <Card title="Language Analytics" icon="chart-pie" href="/features/language-analytics">
+    Analyze programming languages used across repositories
+  </Card>
+</CardGroup>

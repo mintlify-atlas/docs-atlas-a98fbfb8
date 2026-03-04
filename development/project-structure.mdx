@@ -1,0 +1,570 @@
+---
+title: Project Structure
+description: Detailed breakdown of GitScope's file and folder organization
+---
+
+## Directory Overview
+
+GitScope follows a standard Vite + React project structure with clear separation between source code, configuration, and build artifacts.
+
+```
+github-dashboard/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          # GitHub Actions CI/CD
+├── public/                     # Static assets (if any)
+├── src/                        # Application source code
+│   ├── components/             # React components
+│   ├── hooks/                  # Custom React hooks
+│   ├── App.jsx                 # Root component
+│   ├── App.module.css          # Root component styles
+│   ├── index.css               # Global styles & CSS variables
+│   └── main.jsx                # React entry point
+├── dist/                       # Build output (generated)
+├── node_modules/               # Dependencies (generated)
+├── .gitignore
+├── index.html                  # HTML entry point
+├── package.json                # Project metadata & dependencies
+├── package-lock.json           # Locked dependency versions
+├── vite.config.js              # Vite configuration
+└── README.md                   # Project documentation
+```
+
+---
+
+## Root Directory
+
+### Configuration Files
+
+<AccordionGroup>
+  <Accordion title="vite.config.js" icon="wrench">
+    **Purpose**: Vite build tool configuration
+    
+    **Location**: `/vite.config.js`
+    
+    **Contents**:
+    ```javascript
+    import { defineConfig } from 'vite'
+    import react from '@vitejs/plugin-react'
+
+    export default defineConfig({
+      plugins: [react()],
+      base: '/github-dashboard/',
+    })
+    ```
+    
+    **Key Settings**:
+    - `plugins: [react()]` → Enables React Fast Refresh and JSX transformation
+    - `base: '/github-dashboard/'` → Sets base path for GitHub Pages deployment
+  </Accordion>
+
+  <Accordion title="package.json" icon="box">
+    **Purpose**: Project metadata, dependencies, and scripts
+    
+    **Location**: `/package.json`
+    
+    **Key Sections**:
+    - `name`: `github-dashboard`
+    - `type`: `module` (ES modules)
+    - `homepage`: Deployment URL for GitHub Pages
+    - `scripts`: Build, dev, and deployment commands
+    - `dependencies`: Production runtime dependencies
+    - `devDependencies`: Build-time development tools
+  </Accordion>
+
+  <Accordion title="index.html" icon="file-code">
+    **Purpose**: HTML entry point for the application
+    
+    **Location**: `/index.html`
+    
+    **Key Features**:
+    - Single page application (SPA) entry point
+    - Contains root `<div id="root">` mount point
+    - Imports `/src/main.jsx` as JavaScript module
+    - Vite injects script tags during development and build
+  </Accordion>
+
+  <Accordion title=".gitignore" icon="eye-slash">
+    **Purpose**: Excludes files from Git version control
+    
+    **Typical Contents**:
+    - `node_modules/` → Dependencies
+    - `dist/` → Build output
+    - `.env` → Environment variables
+    - Editor-specific files
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## `/src` Directory
+
+The `src/` folder contains all application source code.
+
+### Entry Points
+
+<CardGroup cols={2}>
+  <Card title="main.jsx" icon="door-open">
+    **Purpose**: React application bootstrap
+    
+    **Responsibilities**:
+    - Imports React and ReactDOM
+    - Renders root `<App />` component
+    - Mounts to `#root` element in `index.html`
+  </Card>
+
+  <Card title="index.css" icon="palette">
+    **Purpose**: Global styles and CSS variables
+    
+    **Contents**:
+    - CSS reset (box-sizing, margin, padding)
+    - `:root` CSS variables for light theme
+    - `[data-theme="dark"]` variables for dark theme
+    - Global animations (fadeUp, spin, pulse, shimmer)
+    - Utility classes (.fade-up, .skeleton, .spinner)
+    - Custom scrollbar styles
+  </Card>
+</CardGroup>
+
+### Root Component
+
+<Accordion title="App.jsx & App.module.css" icon="react">
+  **Purpose**: Root component and application orchestrator
+  
+  **Location**: `src/App.jsx` + `src/App.module.css`
+  
+  **Responsibilities**:
+  - Manages all top-level application state
+  - Coordinates data fetching via `useGitHub` hook
+  - Renders child components with appropriate props
+  - Handles theme persistence and switching
+  - Implements search and pagination logic
+  
+  **Key State Variables**:
+  - `theme`, `user`, `repos`, `selectedRepo`, `loading`, `error`, `page`, `hasMore`, `currentUsername`, `showToken`
+  
+  <Info>
+    App.jsx acts as the **single source of truth** for application state. No global state management library is used.
+  </Info>
+</Accordion>
+
+---
+
+## `/src/components` Directory
+
+All UI components live here, each with its own `.module.css` file for scoped styles.
+
+### Component Files
+
+<CardGroup cols={2}>
+  <Card title="Header" icon="bars">
+    **Files**: `Header.jsx`, `Header.module.css`
+    
+    **Purpose**: Top navigation bar
+    
+    **Features**:
+    - App logo and title
+    - Dark/light theme toggle button
+    - Rate limit indicator (color-coded)
+    - "Token API" button to open modal
+  </Card>
+
+  <Card title="SearchBar" icon="search">
+    **Files**: `SearchBar.jsx`, `SearchBar.module.css`
+    
+    **Purpose**: User search interface
+    
+    **Features**:
+    - Text input with Enter key support
+    - "Analizar" submit button
+    - Suggestion chips (torvalds, gvanrossum, etc.)
+    - Loading spinner during search
+  </Card>
+
+  <Card title="UserCard" icon="user">
+    **Files**: `UserCard.jsx`, `UserCard.module.css`
+    
+    **Purpose**: User profile display
+    
+    **Features**:
+    - Avatar image
+    - Name and bio
+    - Company, location, social links
+    - Stats grid (repos, followers, following, gists)
+  </Card>
+
+  <Card title="LanguageChart" icon="chart-pie">
+    **Files**: `LanguageChart.jsx`, `LanguageChart.module.css`
+    
+    **Purpose**: Language distribution visualization
+    
+    **Features**:
+    - Recharts donut chart
+    - Fetches languages for top 12 repos
+    - In-memory caching with `useRef`
+    - Aggregates bytes by language
+    - Legend with color-coded bars
+  </Card>
+
+  <Card title="RepoList" icon="folder">
+    **Files**: `RepoList.jsx`, `RepoList.module.css`
+    
+    **Purpose**: Repository grid with filters
+    
+    **Features**:
+    - Filter by minimum stars
+    - Sort by updated/stars/forks
+    - Responsive grid layout
+    - Pagination controls
+    - Click to select repo for commit view
+  </Card>
+
+  <Card title="CommitPanel" icon="git-commit">
+    **Files**: `CommitPanel.jsx`, `CommitPanel.module.css`
+    
+    **Purpose**: Display recent commits
+    
+    **Features**:
+    - Shows last 10 commits for selected repo
+    - Commit message, author avatar, SHA
+    - Repository metadata sidebar
+    - "View on GitHub" link
+    - Close button to collapse panel
+  </Card>
+
+  <Card title="TokenModal" icon="key">
+    **Files**: `TokenModal.jsx`, `TokenModal.module.css`
+    
+    **Purpose**: GitHub token configuration
+    
+    **Features**:
+    - Modal overlay with form
+    - Secure password-type input
+    - Save and remove token buttons
+    - Instructions for creating token
+  </Card>
+
+  <Card title="ErrorBanner" icon="triangle-exclamation">
+    **Files**: `ErrorBanner.jsx`, `ErrorBanner.module.css`
+    
+    **Purpose**: Dismissible error messages
+    
+    **Features**:
+    - Red banner with error text
+    - Close button (X icon)
+    - Auto-dismiss option (if implemented)
+  </Card>
+</CardGroup>
+
+---
+
+## `/src/hooks` Directory
+
+Custom React hooks for reusable stateful logic.
+
+<Accordion title="useGitHub.js" icon="github">
+  **Purpose**: GitHub API abstraction layer
+  
+  **Location**: `src/hooks/useGitHub.js`
+  
+  **Exports**:
+  ```javascript
+  export function useGitHub() {
+    return {
+      token,        // Current GitHub token (string)
+      saveToken,    // Function to persist/remove token
+      rateLimit,    // { remaining, limit, reset }
+      getUser,      // Fetch user profile
+      getRepos,     // Fetch user repositories
+      getCommits,   // Fetch repository commits
+      getLanguages, // Fetch repository languages
+    }
+  }
+  ```
+  
+  **Internal State**:
+  - `token`: Loaded from localStorage on mount
+  - `rateLimit`: Extracted from API response headers
+  
+  **Key Methods**:
+  - `request(path, params)`: Generic API request handler
+  - `headers()`: Generates headers with optional token
+  - `saveToken(t)`: Persists token to localStorage
+  
+  <Tip>
+    This hook is **the only place** where `fetch` is called. All components use this abstraction.
+  </Tip>
+</Accordion>
+
+---
+
+## CSS Modules Organization
+
+### Why CSS Modules?
+
+GitScope uses **CSS Modules** for component styling, providing:
+
+<CardGroup cols={2}>
+  <Card title="Scoped Styles" icon="lock">
+    Class names are automatically namespaced to prevent collisions
+  </Card>
+  <Card title="Colocation" icon="layer-group">
+    Each component's styles live next to its JSX file
+  </Card>
+  <Card title="Tree Shaking" icon="tree">
+    Unused styles are removed during build
+  </Card>
+  <Card title="Type Safety" icon="shield">
+    Class names can be autocompleted in modern editors
+  </Card>
+</CardGroup>
+
+### Naming Convention
+
+Every component follows this pattern:
+
+```
+ComponentName.jsx
+ComponentName.module.css
+```
+
+**Example**:
+```
+Header.jsx
+Header.module.css
+```
+
+### Usage Pattern
+
+```jsx
+import styles from './Header.module.css'
+
+export function Header() {
+  return (
+    <header className={styles.header}>
+      <h1 className={styles.title}>GitScope</h1>
+    </header>
+  )
+}
+```
+
+**Generated HTML**:
+```html
+<header class="Header_header__a7b3c">
+  <h1 class="Header_title__d8e9f">GitScope</h1>
+</header>
+```
+
+<Note>
+  The hash suffix (`__a7b3c`) is generated by Vite to ensure uniqueness.
+</Note>
+
+---
+
+## Global vs. Scoped Styles
+
+### Global Styles (`index.css`)
+
+**Used for**:
+- CSS variables (colors, spacing, fonts)
+- CSS resets
+- Global utility classes (`.fade-up`, `.skeleton`, `.spinner`)
+- Keyframe animations
+- Theme definitions (`:root`, `[data-theme="dark"]`)
+
+**Example**:
+```css
+:root {
+  --bg: #f6f8fa;
+  --text: #1a2332;
+  --accent: #2563eb;
+}
+
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --text: #e6edf3;
+  --accent: #58a6ff;
+}
+```
+
+### Scoped Styles (`.module.css`)
+
+**Used for**:
+- Component-specific layouts
+- Element-specific styles
+- Component state variations (`.selected`, `.active`)
+
+**Example** (`RepoList.module.css`):
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.repoCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.repoCard.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+```
+
+<Info>
+  Note how `.module.css` files reference global CSS variables defined in `index.css`.
+</Info>
+
+---
+
+## Build Output (`/dist`)
+
+Generated by running `npm run build`. This folder is deployed to GitHub Pages.
+
+**Contents**:
+```
+dist/
+├── assets/
+│   ├── index-[hash].js       # Bundled JavaScript
+│   └── index-[hash].css      # Bundled CSS
+├── index.html                # HTML entry with injected assets
+└── vite.svg                  # Vite logo (if used)
+```
+
+**Characteristics**:
+- All JavaScript is bundled and minified
+- CSS Modules are compiled to plain CSS with hashed class names
+- Assets include content hashes for cache busting
+- Source maps generated for debugging (if configured)
+
+<Warning>
+  Never manually edit files in `/dist`. They are regenerated on every build.
+</Warning>
+
+---
+
+## GitHub Actions Workflow
+
+**Location**: `.github/workflows/deploy.yml`
+
+**Purpose**: Automated deployment to GitHub Pages on push to main branch
+
+**Typical Steps**:
+1. Checkout code
+2. Install Node.js
+3. Install dependencies (`npm ci`)
+4. Build application (`npm run build`)
+5. Deploy `dist/` folder to `gh-pages` branch
+
+<Tip>
+  The `gh-pages` package in `devDependencies` is used by the deploy script to push the build to the `gh-pages` branch.
+</Tip>
+
+---
+
+## File Naming Conventions
+
+| File Type | Convention | Example |
+|-----------|------------|----------|
+| Components | PascalCase + `.jsx` | `SearchBar.jsx` |
+| Component Styles | PascalCase + `.module.css` | `SearchBar.module.css` |
+| Hooks | camelCase + `.js` | `useGitHub.js` |
+| Global Styles | lowercase + `.css` | `index.css` |
+| Config | lowercase + `.js` | `vite.config.js` |
+
+---
+
+## Import Path Patterns
+
+### Relative Imports
+
+All imports use relative paths (no path aliases configured).
+
+**Examples**:
+```javascript
+// In App.jsx
+import { useGitHub } from './hooks/useGitHub'
+import { Header } from './components/Header'
+import styles from './App.module.css'
+
+// In RepoList.jsx
+import styles from './RepoList.module.css'
+import { Star, GitFork } from 'lucide-react'
+```
+
+### Import Order Convention
+
+```javascript
+// 1. External dependencies
+import { useState, useEffect } from 'react'
+import { Star, GitFork } from 'lucide-react'
+
+// 2. Internal hooks
+import { useGitHub } from './hooks/useGitHub'
+
+// 3. Internal components
+import { Header } from './components/Header'
+
+// 4. Styles
+import styles from './App.module.css'
+```
+
+---
+
+## Adding New Components
+
+To add a new component, follow these steps:
+
+<Steps>
+  <Step title="Create Component File">
+    Create `src/components/NewComponent.jsx`
+    ```jsx
+    import styles from './NewComponent.module.css'
+
+    export function NewComponent({ prop1, prop2 }) {
+      return (
+        <div className={styles.container}>
+          {/* Component JSX */}
+        </div>
+      )
+    }
+    ```
+  </Step>
+
+  <Step title="Create Styles File">
+    Create `src/components/NewComponent.module.css`
+    ```css
+    .container {
+      background: var(--bg-card);
+      padding: 1rem;
+      border-radius: var(--radius);
+    }
+    ```
+  </Step>
+
+  <Step title="Import in Parent">
+    Import and use in parent component (usually `App.jsx`)
+    ```jsx
+    import { NewComponent } from './components/NewComponent'
+
+    // In render:
+    <NewComponent prop1={value1} prop2={value2} />
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Learn about system architecture and design patterns
+  </Card>
+  <Card title="Tech Stack" icon="layer-group" href="/development/tech-stack">
+    Explore the technologies and dependencies
+  </Card>
+</CardGroup>

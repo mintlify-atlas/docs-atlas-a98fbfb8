@@ -1,0 +1,359 @@
+---
+title: Installation
+description: Install and run GitScope locally on your machine
+---
+
+# Installation
+
+This guide will help you install and run GitScope locally for development or customization.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version 18 or higher**
+    
+    Download from [nodejs.org](https://nodejs.org/)
+  </Card>
+  <Card title="npm" icon="npm">
+    **Version 9 or higher**
+    
+    Included with Node.js installation
+  </Card>
+</CardGroup>
+
+<Note>
+  Check your versions with:
+  ```bash
+  node --version
+  npm --version
+  ```
+</Note>
+
+## Installation steps
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone GitScope from GitHub to your local machine:
+    
+    ```bash
+    git clone https://github.com/David-Andino/github-dashboard.git
+    cd github-dashboard
+    ```
+    
+    This downloads the complete source code including all components, hooks, and configuration files.
+  </Step>
+  
+  <Step title="Install dependencies">
+    Install all required npm packages:
+    
+    ```bash
+    npm install
+    ```
+    
+    This installs the following key dependencies from `package.json`:
+    
+    **Core dependencies:**
+    - `react@^18.2.0` — UI framework
+    - `react-dom@^18.2.0` — React DOM renderer
+    - `recharts@^2.10.3` — Chart library for language visualization
+    - `lucide-react@^0.263.1` — Icon library
+    
+    **Dev dependencies:**
+    - `vite@^5.0.8` — Build tool and dev server
+    - `@vitejs/plugin-react@^4.2.1` — Vite React plugin
+    - `@types/react@^18.2.43` — TypeScript types for React
+    - `gh-pages@^6.1.1` — GitHub Pages deployment tool
+  </Step>
+  
+  <Step title="Start the development server">
+    Launch the Vite development server:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    You should see output like:
+    
+    ```
+    VITE v5.0.8  ready in 500 ms
+    
+    ➜  Local:   http://localhost:5173/
+    ➜  Network: use --host to expose
+    ➜  press h to show help
+    ```
+    
+    <Note>
+      The dev server includes Hot Module Replacement (HMR) — changes to your code will update instantly without a full page reload.
+    </Note>
+  </Step>
+  
+  <Step title="Open in your browser">
+    Navigate to the local URL:
+    
+    **[http://localhost:5173](http://localhost:5173)**
+    
+    You should see the GitScope search interface. The app is now running locally!
+  </Step>
+</Steps>
+
+## Available npm scripts
+
+GitScope includes four npm scripts defined in `package.json:7-12`:
+
+<CodeGroup>
+
+```bash Development server
+npm run dev
+```
+
+```bash Production build
+npm run build
+```
+
+```bash Preview build
+npm run preview
+```
+
+```bash Deploy to GitHub Pages
+npm run deploy
+```
+
+</CodeGroup>
+
+### Script details
+
+| Script | Command | Purpose |
+|--------|---------|----------|
+| `dev` | `vite` | Starts development server at `localhost:5173` with HMR |
+| `build` | `vite build` | Creates production build in `/dist` directory |
+| `preview` | `vite preview` | Serves production build locally for testing |
+| `deploy` | `npm run build && gh-pages -d dist` | Builds and deploys to GitHub Pages |
+
+### Development workflow
+
+**During development:**
+```bash
+npm run dev
+```
+Use this for active development. The server watches for file changes and updates instantly.
+
+**Before deploying:**
+```bash
+npm run build
+npm run preview
+```
+Test the production build locally to catch any build-specific issues.
+
+**To deploy:**
+```bash
+npm run deploy
+```
+<Warning>
+  The deploy script requires the `gh-pages` package and proper GitHub repository configuration. It will push the built files to the `gh-pages` branch.
+</Warning>
+
+## Project structure
+
+After installation, your project directory will look like this:
+
+```
+github-dashboard/
+├── public/                     # Static assets
+├── src/
+│   ├── components/             # React components
+│   │   ├── Header.jsx          # Top navigation with theme toggle
+│   │   ├── SearchBar.jsx       # Search input and suggestions
+│   │   ├── UserCard.jsx        # User profile display
+│   │   ├── RepoList.jsx        # Repository grid with filters
+│   │   ├── CommitPanel.jsx     # Commit history viewer
+│   │   ├── LanguageChart.jsx   # Donut chart for languages
+│   │   ├── TokenModal.jsx      # Token configuration modal
+│   │   ├── ErrorBanner.jsx     # Error message display
+│   │   └── *.module.css        # Component-scoped styles
+│   ├── hooks/
+│   │   └── useGitHub.js        # GitHub API integration hook
+│   ├── App.jsx                 # Root component
+│   ├── App.module.css          # App-level styles
+│   ├── index.css               # Global CSS variables and animations
+│   └── main.jsx                # React entry point
+├── index.html                  # HTML template
+├── vite.config.js              # Vite configuration
+├── package.json                # Dependencies and scripts
+└── package-lock.json           # Locked dependency versions
+```
+
+### Key files to explore
+
+<CardGroup cols={2}>
+  <Card title="useGitHub.js" icon="hook">
+    `src/hooks/useGitHub.js`
+    
+    All GitHub API communication logic, token management, and rate limit tracking.
+  </Card>
+  <Card title="App.jsx" icon="react">
+    `src/App.jsx`
+    
+    Root component that orchestrates state management and component composition.
+  </Card>
+  <Card title="vite.config.js" icon="gear">
+    `vite.config.js`
+    
+    Vite configuration including base path for GitHub Pages deployment.
+  </Card>
+  <Card title="index.css" icon="palette">
+    `src/index.css`
+    
+    Global CSS variables for theming, animations, and utility classes.
+  </Card>
+</CardGroup>
+
+## Configuration
+
+### Vite configuration
+
+The `vite.config.js` file contains minimal configuration:
+
+```js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/github-dashboard/',
+})
+```
+
+- `plugins: [react()]` — Enables React Fast Refresh and JSX support
+- `base: '/github-dashboard/'` — Sets base path for GitHub Pages deployment
+
+<Note>
+  If deploying to a different URL, update the `base` field to match your hosting path. For root-level hosting, use `base: '/'`.
+</Note>
+
+### Environment variables
+
+GitScope doesn't require environment variables. The GitHub API token is managed through the UI and stored in the browser's `localStorage`.
+
+However, if you want to add environment variables for development:
+
+1. Create a `.env.local` file in the project root
+2. Add variables prefixed with `VITE_`:
+   ```bash
+   VITE_API_BASE_URL=https://api.github.com
+   ```
+3. Access in code:
+   ```jsx
+   const apiBase = import.meta.env.VITE_API_BASE_URL
+   ```
+
+## Development tips
+
+### Hot Module Replacement
+
+Vite's HMR updates your app instantly when you save changes:
+
+- **Component changes** — Preserves component state
+- **CSS changes** — Updates styles without reload
+- **Hook changes** — Triggers re-render with new logic
+
+### CSS Modules
+
+All component styles use CSS Modules for scoped styling:
+
+```jsx
+// Component file
+import styles from './MyComponent.module.css'
+
+export function MyComponent() {
+  return <div className={styles.container}>Content</div>
+}
+```
+
+```css
+/* MyComponent.module.css */
+.container {
+  padding: 1rem;
+  background: var(--bg-primary);
+}
+```
+
+### Theme variables
+
+Customize theme colors in `src/index.css`:
+
+```css
+:root {
+  --bg-primary: #ffffff;
+  --text-primary: #1a1a1a;
+  /* ... more variables */
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --text-primary: #e6edf3;
+  /* ... more variables */
+}
+```
+
+## Troubleshooting
+
+### Port already in use
+
+If port 5173 is already in use, Vite will automatically try the next available port (5174, 5175, etc.).
+
+To specify a custom port:
+```bash
+npm run dev -- --port 3000
+```
+
+### Module not found errors
+
+If you see module import errors:
+
+1. Delete `node_modules` and `package-lock.json`
+2. Run `npm install` again
+3. Restart the dev server
+
+### Build failures
+
+If `npm run build` fails:
+
+1. Check for TypeScript errors in the console
+2. Ensure all imports are correct (file extensions, paths)
+3. Verify no unused variables or missing dependencies
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart guide"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Learn how to use GitScope to analyze profiles
+  </Card>
+  <Card
+    title="Architecture"
+    icon="sitemap"
+    href="/development/architecture"
+  >
+    Deep dive into GitScope's technical architecture
+  </Card>
+  <Card
+    title="GitHub API"
+    icon="code"
+    href="/development/github-api"
+  >
+    Explore GitHub API endpoints and hook functions
+  </Card>
+  <Card
+    title="Configuration"
+    icon="gear"
+    href="/configuration/api-token"
+  >
+    Set up your GitHub token and customize settings
+  </Card>
+</CardGroup>

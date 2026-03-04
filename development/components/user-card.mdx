@@ -1,0 +1,176 @@
+---
+title: UserCard Component
+description: User profile card displaying GitHub user information, avatar, bio, and statistics
+---
+
+## Overview
+
+The `UserCard` component displays comprehensive GitHub user profile information including avatar, name, bio, social links, and key statistics (repositories, followers, following, gists).
+
+**Location in UI**: Left sidebar, below the header when user data is loaded
+
+**Source**: `~/workspace/source/src/components/UserCard.jsx`
+
+## Props
+
+<ParamField path="user" type="object" required>
+  GitHub user data object returned from the GitHub API. Contains profile information and statistics.
+  
+  ```typescript
+  user: {
+    login: string,              // GitHub username
+    name: string | null,        // Display name
+    avatar_url: string,         // Avatar image URL
+    html_url: string,           // GitHub profile URL
+    bio: string | null,         // User bio
+    company: string | null,     // Company name
+    location: string | null,    // Location
+    blog: string | null,        // Website URL
+    twitter_username: string | null,  // Twitter handle
+    public_repos: number,       // Public repository count
+    followers: number,          // Follower count
+    following: number,          // Following count
+    public_gists: number        // Public gist count
+  }
+  ```
+</ParamField>
+
+## Usage Example
+
+From `App.jsx:101`:
+
+```jsx
+<UserCard user={user} />
+```
+
+The user data is fetched in `App.jsx:45-46`:
+
+```jsx
+const [userData, reposData] = await Promise.all([
+  getUser(username),
+  getRepos(username, 1, PER_PAGE),
+])
+setUser(userData)
+```
+
+## Key Features
+
+### Profile Header
+
+Displays avatar, name, and GitHub link:
+
+```jsx
+<div className={styles.top}>
+  <img src={user.avatar_url} alt={user.login} className={styles.avatar} />
+  <div className={styles.info}>
+    <div className={styles.nameRow}>
+      <h2 className={styles.name}>{user.name || user.login}</h2>
+      <a href={user.html_url} target="_blank" rel="noreferrer" className={styles.ghLink}>
+        @{user.login}
+      </a>
+    </div>
+    {user.bio && <p className={styles.bio}>{user.bio}</p>}
+    {/* ... */}
+  </div>
+</div>
+```
+
+**Name fallback**: Uses `user.login` if `user.name` is not available.
+
+### Social Metadata
+
+Conditionally renders social information with icons:
+
+```jsx
+<div className={styles.meta}>
+  {user.company && (
+    <span className={styles.metaItem}><Building2 size={13} />{user.company}</span>
+  )}
+  {user.location && (
+    <span className={styles.metaItem}><MapPin size={13} />{user.location}</span>
+  )}
+  {user.blog && (
+    <a href={user.blog.startsWith('http') ? user.blog : `https://${user.blog}`}
+       target="_blank" rel="noreferrer" className={styles.metaItem}>
+      <Link size={13} />{user.blog.replace(/^https?:\/\//, '')}
+    </a>
+  )}
+  {user.twitter_username && (
+    <a href={`https://twitter.com/${user.twitter_username}`}
+       target="_blank" rel="noreferrer" className={styles.metaItem}>
+      <Twitter size={13} />@{user.twitter_username}
+    </a>
+  )}
+</div>
+```
+
+**Blog URL handling**: Automatically prepends `https://` if protocol is missing, and strips protocol from display text.
+
+### Statistics Grid
+
+Displays four key metrics using the `Stat` subcomponent:
+
+```jsx
+<div className={styles.stats}>
+  <Stat label="Repositorios" value={user.public_repos} />
+  <Stat label="Seguidores" value={user.followers} />
+  <Stat label="Siguiendo" value={user.following} />
+  <Stat label="Gists" value={user.public_gists} />
+</div>
+```
+
+## Subcomponents
+
+### Stat Component
+
+Helper component for displaying individual statistics:
+
+```jsx
+function Stat({ label, value }) {
+  return (
+    <div className={styles.stat}>
+      <span className={styles.statVal}>{value?.toLocaleString() ?? '—'}</span>
+      <span className={styles.statLabel}>{label}</span>
+    </div>
+  )
+}
+```
+
+**Features**:
+- Formats numbers with locale-specific separators (e.g., `1000` → `1,000`)
+- Shows em dash (`—`) if value is null/undefined
+
+## Implementation Details
+
+### Icons Used
+
+From Lucide React:
+- `Building2` - Company
+- `MapPin` - Location
+- `Link` - Website/blog
+- `Twitter` - Twitter handle
+
+### External Links
+
+All external links use:
+- `target="_blank"` - Opens in new tab
+- `rel="noreferrer"` - Security best practice
+
+### Animation
+
+Applies fade-up animation on mount:
+
+```jsx
+<div className={`${styles.card} fade-up`}>
+```
+
+### Styling
+
+Imports modular CSS from `UserCard.module.css` for component-scoped styles.
+
+## Conditional Rendering
+
+Only renders fields that have values:
+- Bio displayed only if `user.bio` exists
+- Each metadata item checks for existence before rendering
+- Statistics use `??` operator for null/undefined handling

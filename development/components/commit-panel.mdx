@@ -1,0 +1,291 @@
+---
+title: CommitPanel Component
+description: Expandable panel displaying recent commits and repository statistics
+---
+
+## Overview
+
+The `CommitPanel` component displays recent commits for a selected repository along with repository statistics (stars, forks, issues, size, license). It fetches commit data from the GitHub API and renders commit history with author information.
+
+**Location in UI**: Below the repository list in the main content area when a repository is selected
+
+**Source**: `~/workspace/source/src/components/CommitPanel.jsx`
+
+## Props
+
+<ParamField path="repo" type="object" required>
+  Selected repository object containing repository details.
+  
+  ```typescript
+  repo: {
+    name: string,
+    html_url: string,
+    stargazers_count: number,
+    forks_count: number,
+    open_issues_count: number,
+    language: string | null,
+    size: number,              // Size in KB
+    license: {
+      spdx_id: string
+    } | null
+  }
+  ```
+</ParamField>
+
+<ParamField path="username" type="string" required>
+  GitHub username of the repository owner. Used to construct the API request.
+</ParamField>
+
+<ParamField path="getCommits" type="function" required>
+  Function to fetch commits from the GitHub API.
+  
+  ```javascript
+  getCommits: (username: string, repoName: string) => Promise<Array<Commit>>
+  ```
+  
+  Returns array of commit objects:
+  ```typescript
+  Array<{
+    sha: string,
+    html_url: string,
+    commit: {
+      message: string,
+      author: {
+        name: string,
+        date: string  // ISO date string
+      }
+    },
+    author: {
+      avatar_url: string
+    } | null
+  }>
+  ```
+</ParamField>
+
+<ParamField path="onClose" type="function" required>
+  Callback invoked when the close button is clicked.
+  
+  ```javascript
+  onClose: () => void
+  ```
+</ParamField>
+
+## Usage Example
+
+From `App.jsx:130-136`:
+
+```jsx
+{selectedRepo && (
+  <CommitPanel
+    repo={selectedRepo}
+    username={user.login}
+    getCommits={getCommits}
+    onClose={() => setSelectedRepo(null)}
+  />
+)}
+```
+
+The panel is conditionally rendered only when a repository is selected.
+
+## Key Features
+
+### Commit Fetching
+
+Automatically fetches commits when repository changes:
+
+```jsx
+const [commits, setCommits] = useState([])
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState(null)
+
+useEffect(() => {
+  if (!repo) return
+  setLoading(true)
+  setError(null)
+  setCommits([])
+  getCommits(username, repo.name)
+    .then(data => { setCommits(data); setLoading(false) })
+    .catch(e => { setError(e.message); setLoading(false) })
+}, [repo, username])
+```
+
+### Panel Header
+
+Displays title with repository name and action buttons:
+
+```jsx
+<div className={styles.panelHeader}>
+  <div className={styles.panelTitle}>
+    <GitCommit size={16} style={{ color: 'var(--accent)' }} />
+    <span>Commits recientes en <strong>{repo.name}</strong></span>
+  </div>
+  <div className={styles.panelActions}>
+    <a href={repo.html_url} target="_blank" rel="noreferrer" className={styles.extLink}>
+      <ExternalLink size={14} /> Ver en GitHub
+    </a>
+    <button className={styles.closeBtn} onClick={onClose}><X size={16} /></button>
+  </div>
+</div>
+```
+
+### Commit List
+
+Displays recent commits with author info and relative timestamps:
+
+```jsx
+{!loading && commits.map((c, i) => {
+  const msg = c.commit.message.split('\n')[0]  // First line only
+  const sha = c.sha.slice(0, 7)  // Short SHA
+  const author = c.commit.author
+  return (
+    <a
+      key={c.sha}
+      href={c.html_url}
+      target="_blank"
+      rel="noreferrer"
+      className={`${styles.commit} fade-up`}
+      style={{ animationDelay: `${i * 0.04}s` }}
+    >
+      <div className={styles.commitLeft}>
+        {c.author?.avatar_url && (
+          <img src={c.author.avatar_url} className={styles.avatar} alt="" />
+        )}
+        <div className={styles.commitInfo}>
+          <span className={styles.message}>{msg}</span>
+          <span className={styles.commitMeta}>
+            {author.name} · {timeAgo(author.date)}
+          </span>
+        </div>
+      </div>
+      <code className={styles.sha}>{sha}</code>
+    </a>
+  )
+})}
+```
+
+**Commit message handling**: Only displays the first line of the commit message.
+
+### Repository Statistics
+
+Footer displaying key repository metrics:
+
+```jsx
+<div className={styles.repoStats}>
+  {repo.stargazers_count > 0 && (
+    <span className={styles.stat}>⭐ {repo.stargazers_count.toLocaleString()}</span>
+  )}
+  {repo.forks_count > 0 && (
+    <span className={styles.stat}>🍴 {repo.forks_count}</span>
+  )}
+  {repo.open_issues_count > 0 && (
+    <span className={styles.stat}>🐛 {repo.open_issues_count} issues</span>
+  )}
+  {repo.language && (
+    <span className={styles.stat}>📦 {repo.language}</span>
+  )}
+  {repo.size > 0 && (
+    <span className={styles.stat}>💾 {(repo.size / 1024).toFixed(1)} MB</span>
+  )}
+  {repo.license?.spdx_id && (
+    <span className={styles.stat}>📄 {repo.license.spdx_id}</span>
+  )}
+</div>
+```
+
+**Size calculation**: Converts KB to MB with one decimal place.
+
+### Loading State
+
+Shows skeleton loaders while fetching:
+
+```jsx
+{loading && (
+  <div className={styles.loadList}>
+    {[1,2,3,4,5].map(i => (
+      <div key={i} className={`skeleton ${styles.skCommit}`} />
+    ))}
+  </div>
+)}
+```
+
+### Error Handling
+
+Displays error message if commit fetch fails:
+
+```jsx
+{error && <div className={styles.error}>{error}</div>}
+```
+
+### Empty State
+
+Shows message when no commits are available:
+
+```jsx
+{!loading && !error && commits.length === 0 && (
+  <div className={styles.empty}>No hay commits disponibles</div>
+)}
+```
+
+## Helper Functions
+
+### timeAgo
+
+Converts ISO date strings to relative time format:
+
+```jsx
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr)
+  const d = Math.floor(diff / 86400000)
+  if (d === 0) return 'hoy'
+  if (d === 1) return 'ayer'
+  if (d < 30) return `hace ${d}d`
+  const m = Math.floor(d / 30)
+  if (m < 12) return `hace ${m}m`
+  return `hace ${Math.floor(m / 12)}a`
+}
+```
+
+## Implementation Details
+
+### State Management
+
+Manages commits, loading, and error states:
+
+```jsx
+const [commits, setCommits] = useState([])
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState(null)
+```
+
+### SHA Display
+
+Truncates commit SHA to 7 characters:
+
+```jsx
+const sha = c.sha.slice(0, 7)
+```
+
+### Animation
+
+Staggered fade-in for commits:
+
+```jsx
+style={{ animationDelay: `${i * 0.04}s` }}
+```
+
+### Icons
+
+From Lucide React:
+- `GitCommit` - Panel title icon
+- `ExternalLink` - GitHub link icon
+- `X` - Close button icon
+
+### External Links
+
+Commit items link to GitHub commit pages:
+- Opens in new tab (`target="_blank"`)
+- Includes `rel="noreferrer"` for security
+
+### Styling
+
+Imports modular CSS from `CommitPanel.module.css` for component-scoped styles.

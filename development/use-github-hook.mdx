@@ -1,0 +1,535 @@
+---
+title: 'useGitHub Hook'
+description: 'Custom React hook for GitHub API integration'
+---
+
+## Overview
+
+The `useGitHub` hook encapsulates all GitHub API logic, including authentication, request handling, rate limit tracking, and error management.
+
+**Location:** `src/hooks/useGitHub.js`
+
+## Import
+
+```javascript
+import { useGitHub } from './hooks/useGitHub'
+```
+
+## Hook API
+
+### Return Values
+
+The hook returns an object with the following properties:
+
+```javascript
+const { 
+  token,        // Current authentication token
+  saveToken,    // Function to save/remove token
+  rateLimit,    // Rate limit status object
+  getUser,      // Fetch user profile
+  getRepos,     // Fetch user repositories
+  getCommits,   // Fetch repository commits
+  getLanguages  // Fetch repository languages
+} = useGitHub()
+```
+
+## State Management
+
+### token
+
+<ParamField path="token" type="string">
+  Current GitHub Personal Access Token. Initialized from localStorage on mount.
+</ParamField>
+
+```javascript
+const [token, setToken] = useState(() => localStorage.getItem('gh_token') || '')
+```
+
+### rateLimit
+
+<ParamField path="rateLimit" type="object | null">
+  Rate limit information extracted from API response headers. `null` until first request.
+</ParamField>
+
+**Structure:**
+
+```typescript
+{
+  remaining: number,  // Requests remaining
+  limit: number,      // Total requests per hour
+  reset: number       // Reset timestamp (milliseconds)
+}
+```
+
+## Functions
+
+### saveToken
+
+Saves or removes the authentication token.
+
+<ParamField path="token" type="string">
+  The GitHub Personal Access Token to save. Pass empty string to remove.
+</ParamField>
+
+**Signature:**
+```javascript
+saveToken(token: string) => void
+```
+
+**Example:**
+```javascript
+// Save token
+saveToken('ghp_abc123...')
+
+// Remove token
+saveToken('')
+```
+
+**Implementation:**
+```javascript
+const saveToken = (t) => {
+  setToken(t)
+  if (t) localStorage.setItem('gh_token', t)
+  else localStorage.removeItem('gh_token')
+}
+```
+
+### getUser
+
+Fetches a GitHub user's profile.
+
+<ParamField path="username" type="string" required>
+  The GitHub username to fetch
+</ParamField>
+
+**Signature:**
+```javascript
+getUser(username: string) => Promise<UserData>
+```
+
+**Example:**
+```javascript
+try {
+  const userData = await getUser('torvalds')
+  console.log(userData.name)  // "Linus Torvalds"
+  console.log(userData.public_repos)  // Number of repos
+} catch (error) {
+  console.error(error.message)
+}
+```
+
+**API Endpoint:** `GET /users/:username`
+
+**Returns:**
+```typescript
+{
+  login: string
+  avatar_url: string
+  name: string
+  company: string | null
+  blog: string
+  location: string | null
+  bio: string | null
+  twitter_username: string | null
+  public_repos: number
+  public_gists: number
+  followers: number
+  following: number
+  // ... additional fields
+}
+```
+
+### getRepos
+
+Fetches a user's repositories with pagination support.
+
+<ParamField path="username" type="string" required>
+  The GitHub username
+</ParamField>
+
+<ParamField path="page" type="number" default="1">
+  Page number for pagination
+</ParamField>
+
+<ParamField path="per_page" type="number" default="30">
+  Number of repositories per page
+</ParamField>
+
+**Signature:**
+```javascript
+getRepos(username: string, page?: number, per_page?: number) => Promise<RepoData[]>
+```
+
+**Example:**
+```javascript
+// Fetch first page (30 repos)
+const repos = await getRepos('username')
+
+// Fetch second page
+const moreRepos = await getRepos('username', 2, 30)
+
+// Custom page size
+const topRepos = await getRepos('username', 1, 10)
+```
+
+**API Endpoint:** `GET /users/:username/repos`
+
+**Query Parameters:**
+- `page` - Page number
+- `per_page` - Results per page
+- `sort=updated` - Sort by last updated
+- `direction=desc` - Descending order
+
+**Implementation:**
+```javascript
+const getRepos = (username, page = 1, per_page = 30) =>
+  request(`/users/${username}/repos`, { 
+    page, 
+    per_page, 
+    sort: 'updated', 
+    direction: 'desc' 
+  })
+```
+
+**Returns:**
+```typescript
+[
+  {
+    id: number
+    name: string
+    full_name: string
+    description: string | null
+    html_url: string
+    stargazers_count: number
+    forks_count: number
+    language: string | null
+    updated_at: string
+    size: number
+    license: { name: string } | null
+    open_issues_count: number
+    // ... additional fields
+  }
+]
+```
+
+### getCommits
+
+Fetches recent commits from a repository.
+
+<ParamField path="owner" type="string" required>
+  Repository owner username
+</ParamField>
+
+<ParamField path="repo" type="string" required>
+  Repository name
+</ParamField>
+
+<ParamField path="per_page" type="number" default="10">
+  Number of commits to fetch
+</ParamField>
+
+**Signature:**
+```javascript
+getCommits(owner: string, repo: string, per_page?: number) => Promise<CommitData[]>
+```
+
+**Example:**
+```javascript
+// Fetch last 10 commits
+const commits = await getCommits('torvalds', 'linux')
+
+// Fetch last 50 commits
+const moreCommits = await getCommits('torvalds', 'linux', 50)
+
+commits.forEach(commit => {
+  console.log(commit.commit.message)
+  console.log(commit.sha)
+  console.log(commit.author.login)
+})
+```
+
+**API Endpoint:** `GET /repos/:owner/:repo/commits`
+
+**Implementation:**
+```javascript
+const getCommits = (owner, repo, per_page = 10) =>
+  request(`/repos/${owner}/${repo}/commits`, { per_page })
+```
+
+**Returns:**
+```typescript
+[
+  {
+    sha: string
+    commit: {
+      author: {
+        name: string
+        email: string
+        date: string
+      }
+      message: string
+    }
+    author: {
+      login: string
+      avatar_url: string
+    } | null
+  }
+]
+```
+
+### getLanguages
+
+Fetches programming languages used in a repository.
+
+<ParamField path="owner" type="string" required>
+  Repository owner username
+</ParamField>
+
+<ParamField path="repo" type="string" required>
+  Repository name
+</ParamField>
+
+**Signature:**
+```javascript
+getLanguages(owner: string, repo: string) => Promise<Record<string, number>>
+```
+
+**Example:**
+```javascript
+const languages = await getLanguages('facebook', 'react')
+// { "JavaScript": 12345, "TypeScript": 5678, "CSS": 1234 }
+
+const total = Object.values(languages).reduce((a, b) => a + b, 0)
+Object.entries(languages).forEach(([lang, bytes]) => {
+  const percentage = ((bytes / total) * 100).toFixed(1)
+  console.log(`${lang}: ${percentage}%`)
+})
+```
+
+**API Endpoint:** `GET /repos/:owner/:repo/languages`
+
+**Implementation:**
+```javascript
+const getLanguages = (owner, repo) =>
+  request(`/repos/${owner}/${repo}/languages`)
+```
+
+**Returns:**
+```typescript
+Record<string, number>  // { languageName: bytesOfCode }
+```
+
+<Note>
+  Values represent bytes of code, not file counts. Use for percentage calculations.
+</Note>
+
+## Usage in App.jsx
+
+### Basic Setup
+
+```javascript
+import { useGitHub } from './hooks/useGitHub'
+
+function App() {
+  const { 
+    token, 
+    saveToken, 
+    rateLimit, 
+    getUser, 
+    getRepos, 
+    getCommits, 
+    getLanguages 
+  } = useGitHub()
+  
+  // ... component logic
+}
+```
+
+### User Search Pattern
+
+```javascript
+const search = async (username) => {
+  setLoading(true)
+  setError(null)
+  
+  try {
+    const [userData, reposData] = await Promise.all([
+      getUser(username),
+      getRepos(username, 1, 30),
+    ])
+    setUser(userData)
+    setRepos(reposData)
+    setHasMore(reposData.length === 30)
+  } catch (e) {
+    setError(e.message)
+  } finally {
+    setLoading(false)
+  }
+}
+```
+
+<Note>
+  The pattern uses `Promise.all` to fetch user data and repositories in parallel, reducing total request time.
+</Note>
+
+### Pagination Pattern
+
+```javascript
+useEffect(() => {
+  if (!currentUsername || page === 1) return
+  
+  setLoading(true)
+  getRepos(currentUsername, page, 30)
+    .then(data => {
+      setRepos(data)
+      setHasMore(data.length === 30)
+      setSelectedRepo(null)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+    .catch(e => setError(e.message))
+    .finally(() => setLoading(false))
+}, [page])
+```
+
+### Commits on Demand
+
+```javascript
+// In CommitPanel component
+useEffect(() => {
+  setLoading(true)
+  getCommits(username, repo.name)
+    .then(setCommits)
+    .catch(err => setError(err.message))
+    .finally(() => setLoading(false))
+}, [repo.name, username, getCommits])
+```
+
+### Language Aggregation
+
+```javascript
+// In LanguageChart component
+const repos = repos.slice(0, 12)  // Limit to first 12 repos
+
+const promises = repos.map(r => 
+  getLanguages(username, r.name)
+    .then(langs => ({ ...langs }))
+    .catch(() => ({}))
+)
+
+const results = await Promise.all(promises)
+
+// Aggregate bytes by language
+const aggregated = {}
+results.forEach(langs => {
+  Object.entries(langs).forEach(([lang, bytes]) => {
+    aggregated[lang] = (aggregated[lang] || 0) + bytes
+  })
+})
+```
+
+## Error Handling
+
+All functions throw errors that should be caught with try-catch:
+
+```javascript
+try {
+  const user = await getUser('nonexistent')
+} catch (error) {
+  console.error(error.message)  // "Usuario no encontrado"
+}
+```
+
+See [Error Handling](/development/error-handling) for complete patterns.
+
+## Internal Implementation
+
+### Request Function
+
+All API functions use the internal `request` helper:
+
+```javascript
+const request = useCallback(async (path, params = {}) => {
+  const url = new URL(`${BASE}${path}`)
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+  
+  const res = await fetch(url.toString(), { headers: headers() })
+  
+  // Extract rate limit
+  const remaining = res.headers.get('x-ratelimit-remaining')
+  const limit = res.headers.get('x-ratelimit-limit')
+  const reset = res.headers.get('x-ratelimit-reset')
+  if (remaining !== null) {
+    setRateLimit({ remaining: +remaining, limit: +limit, reset: +reset * 1000 })
+  }
+
+  // Error handling
+  if (res.status === 403) {
+    const data = await res.json()
+    throw new Error(data.message || 'Rate limit exceeded')
+  }
+  if (res.status === 404) throw new Error('Usuario no encontrado')
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.message || `HTTP ${res.status}`)
+  }
+
+  return res.json()
+}, [headers])
+```
+
+### Headers Function
+
+```javascript
+const headers = useCallback(() => {
+  const h = { 'Accept': 'application/vnd.github+json' }
+  if (token) h['Authorization'] = `Bearer ${token}`
+  return h
+}, [token])
+```
+
+## Performance Considerations
+
+<Warning>
+  All functions are wrapped in `useCallback` to prevent unnecessary re-renders. Include them in dependency arrays when using in `useEffect`.
+</Warning>
+
+### Memoization
+
+```javascript
+const getUser = useCallback(
+  (username) => request(`/users/${username}`), 
+  [request]
+)
+```
+
+The `request` function itself depends on `headers`, which depends on `token`. This creates a stable reference chain:
+
+```
+token → headers → request → getUser/getRepos/getCommits/getLanguages
+```
+
+Only when `token` changes do all functions get new references.
+
+## Type Safety
+
+While the hook is written in JavaScript, here's the TypeScript equivalent for reference:
+
+```typescript
+interface RateLimit {
+  remaining: number
+  limit: number
+  reset: number
+}
+
+interface UseGitHubReturn {
+  token: string
+  saveToken: (token: string) => void
+  rateLimit: RateLimit | null
+  getUser: (username: string) => Promise<any>
+  getRepos: (username: string, page?: number, per_page?: number) => Promise<any[]>
+  getCommits: (owner: string, repo: string, per_page?: number) => Promise<any[]>
+  getLanguages: (owner: string, repo: string) => Promise<Record<string, number>>
+}
+
+function useGitHub(): UseGitHubReturn
+```

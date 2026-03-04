@@ -1,0 +1,442 @@
+---
+title: 'Understanding Language Analytics Charts'
+description: 'How to read and interpret the language distribution donut chart'
+---
+
+The Language Analytics Chart in GitScope provides a visual breakdown of the programming languages used across a developer's repositories, helping you understand their technical expertise and technology preferences.
+
+## Chart Overview
+
+The language chart appears in the left sidebar, below the user profile card. It displays:
+
+- **Donut chart**: Visual representation of language distribution
+- **Legend with bars**: Detailed percentage breakdown
+- **Color coding**: Consistent colors for each language
+- **Top 10 languages**: Focus on the most significant languages
+
+<Note>
+  The chart analyzes the top 12 repositories (by update date) to provide a representative sample while optimizing API usage.
+</Note>
+
+## How the Chart is Generated
+
+<Steps>
+  <Step title="Repository Selection">
+    GitScope selects the 12 most recently updated repositories from the user's profile.
+    
+    This ensures the analysis reflects current technology preferences rather than historical projects.
+  </Step>
+
+  <Step title="Language Data Fetching">
+    For each repository, GitScope queries GitHub's language API to get byte counts for all languages in that repository.
+    
+    <Tip>
+      Data is fetched in parallel and cached in memory to improve performance.
+    </Tip>
+  </Step>
+
+  <Step title="Aggregation">
+    Byte counts are summed across all repositories for each language.
+    
+    Example: If JavaScript appears in 5 repositories with 10KB, 20KB, 30KB, 15KB, and 5KB, the total is 80KB.
+  </Step>
+
+  <Step title="Percentage Calculation">
+    Each language's percentage is calculated as: (language bytes / total bytes) × 100
+    
+    Percentages are rounded to the nearest whole number.
+  </Step>
+
+  <Step title="Top 10 Selection">
+    Only the top 10 languages by byte count are displayed, ensuring clarity and readability.
+  </Step>
+</Steps>
+
+## Reading the Donut Chart
+
+### Visual Elements
+
+<Accordion title="Donut Segments">
+  Each colored segment represents one programming language.
+  
+  - **Larger segments**: More prevalent languages
+  - **Smaller segments**: Less common languages
+  - **Segment order**: Clockwise from top, roughly by size
+  
+  <Tip>
+    Hover over any segment to see a tooltip with the language name and percentage.
+  </Tip>
+</Accordion>
+
+<Accordion title="Color Palette">
+  GitScope uses a consistent 10-color palette:
+  
+  1. 🔵 Blue
+  2. 🟢 Green
+  3. 🟠 Orange
+  4. 🟣 Purple
+  5. 🔴 Red
+  6. 🔵 Cyan
+  7. 🟠 Dark Orange
+  8. 🟣 Pink
+  9. 🟢 Lime
+  10. 🔵 Indigo
+  
+  Colors are assigned in order of language prevalence.
+</Accordion>
+
+<Accordion title="Center Space">
+  The donut's hollow center provides visual breathing room and makes percentages easier to read in the legend.
+  
+  This design is more scannable than a traditional pie chart.
+</Accordion>
+
+### Interactive Features
+
+- **Hover tooltips**: Move your mouse over any segment to see exact percentages
+- **Legend sync**: Chart segments correspond to legend entries in the same order
+- **Responsive**: Chart resizes appropriately on different screen sizes
+
+## Reading the Legend
+
+The legend below the donut chart provides detailed information:
+
+### Legend Components
+
+<Steps>
+  <Step title="Color Dot">
+    A colored circle matching the donut segment.
+    
+    Use this to quickly map legend entries to chart segments.
+  </Step>
+
+  <Step title="Language Name">
+    The programming language name (e.g., "JavaScript", "Python", "TypeScript").
+  </Step>
+
+  <Step title="Percentage Bar">
+    A horizontal bar visually representing the language's percentage.
+    
+    - Bar width corresponds to percentage (0-100%)
+    - Bar color matches the donut segment
+    - Provides an alternative visualization to the donut
+  </Step>
+
+  <Step title="Percentage Value">
+    The exact percentage as a number (e.g., "35%").
+    
+    This is the most precise data point in the chart.
+  </Step>
+</Steps>
+
+<Note>
+  Legend entries are ordered from highest to lowest percentage, making it easy to identify the primary languages immediately.
+</Note>
+
+## Interpreting Language Distribution
+
+### Dominant Language Patterns
+
+<AccordionGroup>
+  <Accordion title="Single Dominant Language (60%+)">
+    **Pattern:** One language comprises more than 60% of the total.
+    
+    **Indicates:**
+    - Deep specialization
+    - Focused expertise
+    - Potential type-specific developer (e.g., Python data scientist, JavaScript web dev)
+    
+    **Example:** 75% Python, 15% Jupyter Notebook, 10% Shell
+    
+    <Tip>
+      Common in data science, machine learning, and specialized domains.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Dual Primary Languages (30-50% each)">
+    **Pattern:** Two languages dominate with roughly equal distribution.
+    
+    **Indicates:**
+    - Full-stack development
+    - Frontend + backend expertise
+    - Cross-platform development
+    
+    **Example:** 45% JavaScript, 40% Python, 15% other
+    
+    <Note>
+      Often indicates web developers with both frontend and backend experience.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Polyglot Distribution (4-5 significant languages)">
+    **Pattern:** Multiple languages each representing 15-25% of the total.
+    
+    **Indicates:**
+    - Versatile developer
+    - Multiple project types
+    - Cross-domain experience
+    - Experimentation and learning
+    
+    **Example:** 25% Go, 20% Python, 20% JavaScript, 18% Rust, 17% other
+    
+    <Tip>
+      Look for intentional combinations (e.g., Rust + WebAssembly, Python + Cython).
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Diverse Distribution (6+ languages)">
+    **Pattern:** Many languages with no clear dominance (each 10-20%).
+    
+    **Indicates:**
+    - Exploratory developer
+    - Learning multiple technologies
+    - Maintaining legacy projects in various languages
+    - Tutorial or example repositories
+    
+    **Example:** 18% JavaScript, 15% Python, 14% Java, 12% C++, 11% Go, 30% other
+  </Accordion>
+</AccordionGroup>
+
+### Technology Stack Identification
+
+<Accordion title="Web Development Stack">
+  **Common combinations:**
+  - JavaScript + HTML + CSS: Frontend developer
+  - TypeScript + JavaScript: Modern frontend developer
+  - Python + JavaScript + HTML: Full-stack with Python backend
+  - PHP + JavaScript + CSS: Traditional web development
+  - Ruby + JavaScript: Ruby on Rails developer
+  
+  <Note>
+    HTML and CSS percentages are often lower than JavaScript despite being equally important—they're more declarative and less code-intensive.
+  </Note>
+</Accordion>
+
+<Accordion title="Backend/Systems Stack">
+  **Common combinations:**
+  - Go + Python: Modern backend services
+  - Java + Kotlin: JVM-based systems
+  - Rust + C++: Performance-critical systems
+  - C + Shell: Systems programming
+  
+  <Tip>
+    Shell script presence often indicates DevOps or automation work.
+  </Tip>
+</Accordion>
+
+<Accordion title="Mobile Development Stack">
+  **Common combinations:**
+  - Swift + Objective-C: iOS development
+  - Kotlin + Java: Android development
+  - Dart + JavaScript: Flutter cross-platform
+  - JavaScript + TypeScript: React Native
+</Accordion>
+
+<Accordion title="Data Science Stack">
+  **Common combinations:**
+  - Python + Jupyter Notebook: Data analysis
+  - Python + R: Statistical computing
+  - Python + C++: High-performance computing
+  - SQL + Python: Data engineering
+  
+  <Warning>
+    Jupyter Notebook is listed as a separate "language" by GitHub because .ipynb files have distinct structure.
+  </Warning>
+</Accordion>
+
+<Accordion title="Infrastructure/DevOps Stack">
+  **Common combinations:**
+  - Shell + Python: Automation scripts
+  - Go + Shell: Modern DevOps tools
+  - HCL + Shell: Terraform infrastructure
+  - YAML + Shell: Configuration management
+</Accordion>
+
+## Common Language Appearances
+
+### Markup and Config Languages
+
+Sometimes you'll see languages that aren't traditional programming languages:
+
+- **HTML**: Web markup
+- **CSS**: Styling
+- **Markdown**: Documentation
+- **YAML**: Configuration files
+- **JSON**: Data and config files
+
+<Note>
+  These languages indicate documentation quality, project configuration, and web development activity.
+</Note>
+
+### Build and Meta Languages
+
+- **Makefile**: Build automation
+- **CMake**: C/C++ build configuration
+- **Shell**: Bash/Zsh scripts
+- **Dockerfile**: Container definitions
+
+<Tip>
+  Presence of build tool languages suggests mature, production-ready projects.
+</Tip>
+
+## Chart Loading Behavior
+
+### Loading State
+
+While the chart is being generated, you'll see:
+
+- A skeleton loading animation
+- Gray placeholder bars
+- "Lenguajes más usados" title
+
+<Note>
+  Chart generation makes 12 parallel API requests and typically completes within 1-3 seconds.
+</Note>
+
+### Empty State
+
+The chart won't appear if:
+
+- The user has no repositories
+- All repositories lack language data (e.g., empty repos)
+- API rate limit is exceeded before data loads
+
+### Caching
+
+Language data is cached in memory during your session:
+
+- ✅ Switching between tabs maintains cache
+- ✅ Returning to a previously viewed profile uses cache
+- ❌ Refreshing the page clears cache
+- ❌ Searching a new user clears cache
+
+<Tip>
+  This caching significantly improves performance when browsing between repositories and profile sections.
+</Tip>
+
+## Limitations and Considerations
+
+<AccordionGroup>
+  <Accordion title="Sample Size">
+    Only the top 12 repositories are analyzed.
+    
+    **Why this matters:**
+    - Users with 100+ repositories only show a 12% sample
+    - Recent projects weigh more heavily than older work
+    - Archived projects may not be represented
+    
+    **Best practice:** Consider the total repository count when interpreting results.
+  </Accordion>
+
+  <Accordion title="Byte Count vs. File Count">
+    The chart shows bytes of code, not number of files or lines.
+    
+    **Implications:**
+    - Large data files skew results
+    - Minified code inflates percentages
+    - Comments and whitespace are counted
+    
+    **Example:** A single large JSON file can make "JSON" appear as a primary language.
+  </Accordion>
+
+  <Accordion title="GitHub Language Detection">
+    GitHub uses the Linguist library to detect languages.
+    
+    **Quirks:**
+    - Some files are misclassified
+    - Generated files are usually excluded
+    - Documentation files are often excluded
+    - Vendored dependencies may be excluded
+    
+    <Note>
+      Repository owners can customize language detection with a .gitattributes file.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Forked Repositories">
+    Forked repositories are included in the analysis.
+    
+    **Impact:**
+    - Languages from upstream projects affect the chart
+    - Personal modifications may be small relative to total bytes
+    - Chart may not reflect original work
+    
+    **Tip:** Check for fork badges on repository cards to understand the balance between original and forked work.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices for Analysis
+
+### Quick Profile Assessment
+
+<Steps>
+  <Step>
+    Look at the top 2-3 languages in the legend
+  </Step>
+  <Step>
+    Note if one language dominates (specialist) or if distribution is even (generalist)
+  </Step>
+  <Step>
+    Identify the technology domain (web, systems, data, mobile)
+  </Step>
+  <Step>
+    Cross-reference with repository descriptions to confirm patterns
+  </Step>
+</Steps>
+
+### Comparing Developers
+
+<Steps>
+  <Step>
+    Search for the first developer and note their top 3 languages
+  </Step>
+  <Step>
+    Screenshot or write down their distribution pattern
+  </Step>
+  <Step>
+    Search for the second developer
+  </Step>
+  <Step>
+    Compare language diversity, primary languages, and technology stacks
+  </Step>
+</Steps>
+
+### Identifying Trends
+
+<Steps>
+  <Step>
+    Note the presence of modern languages (Rust, Go, TypeScript, Kotlin)
+  </Step>
+  <Step>
+    Check for legacy language percentages (older Java, PHP)
+  </Step>
+  <Step>
+    Look for emerging technologies (WebAssembly, Dart, Elixir)
+  </Step>
+  <Step>
+    Consider language release dates relative to developer activity
+  </Step>
+</Steps>
+
+## Complementary Analysis
+
+<Note>
+  The language chart is most powerful when used alongside other GitScope features:
+</Note>
+
+- **Repository Grid**: See which specific projects use each language
+- **Language Tags**: Identify primary languages for individual repositories
+- **Commit History**: Verify active development in claimed languages
+- **Star Counts**: Determine which language projects are most popular
+
+<Tip>
+  Filter repositories by stars and check language tags to see which technology stack produced the most successful projects.
+</Tip>
+
+## What's Next?
+
+You now understand how to interpret language analytics:
+
+- Return to [Getting Started](/guides/getting-started) for a complete workflow
+- Review [Filtering Repositories](/guides/filtering-repos) to explore specific languages
+- Check [Viewing Commits](/guides/viewing-commits) to verify language usage patterns

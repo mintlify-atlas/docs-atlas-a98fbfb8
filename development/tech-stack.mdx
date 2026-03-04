@@ -1,0 +1,699 @@
+---
+title: Tech Stack
+description: Comprehensive overview of GitScope's technologies, dependencies, and tooling choices
+---
+
+## Technology Overview
+
+GitScope is built with modern web technologies, prioritizing developer experience, performance, and maintainability.
+
+<CardGroup cols={2}>
+  <Card title="React 18" icon="react">
+    UI framework with hooks and concurrent features
+  </Card>
+  <Card title="Vite 5" icon="bolt">
+    Lightning-fast build tool and dev server
+  </Card>
+  <Card title="Recharts" icon="chart-line">
+    Composable charting library for React
+  </Card>
+  <Card title="Lucide React" icon="icons">
+    Beautiful, consistent SVG icon library
+  </Card>
+</CardGroup>
+
+---
+
+## Core Dependencies
+
+### React & React DOM
+
+<Accordion title="react ^18.2.0" icon="react">
+  **Purpose**: Core UI library
+  
+  **Why React 18?**
+  - **Concurrent Rendering**: Automatic batching of state updates for better performance
+  - **React Hooks**: Functional components with state and effects (useState, useEffect, useCallback, useRef)
+  - **Suspense Ready**: Foundation for future code-splitting enhancements
+  - **Mature Ecosystem**: Vast library of compatible packages and tooling
+  
+  **Key Features Used**:
+  - `useState` → Component state management
+  - `useEffect` → Side effects (data fetching, DOM updates)
+  - `useCallback` → Memoized function references
+  - `useRef` → Persistent references (language chart cache)
+  
+  **Example Usage**:
+  ```jsx
+  import { useState, useEffect, useCallback } from 'react'
+  
+  export default function App() {
+    const [user, setUser] = useState(null)
+    const [loading, setLoading] = useState(false)
+    
+    const search = useCallback(async (username) => {
+      setLoading(true)
+      const data = await getUser(username)
+      setUser(data)
+      setLoading(false)
+    }, [getUser])
+    
+    return <div>...</div>
+  }
+  ```
+</Accordion>
+
+<Accordion title="react-dom ^18.2.0" icon="code">
+  **Purpose**: React renderer for web browsers
+  
+  **Why Needed?**
+  - Provides `createRoot` API for React 18's concurrent features
+  - Handles DOM manipulation and updates
+  - Required for any React web application
+  
+  **Usage** (`src/main.jsx`):
+  ```javascript
+  import React from 'react'
+  import ReactDOM from 'react-dom/client'
+  import App from './App.jsx'
+  import './index.css'
+  
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  )
+  ```
+  
+  <Info>
+    `StrictMode` enables additional development checks and warnings.
+  </Info>
+</Accordion>
+
+---
+
+### Data Visualization
+
+<Accordion title="recharts ^2.10.3" icon="chart-pie">
+  **Purpose**: Composable charting library for React
+  
+  **Why Recharts?**
+  - **Declarative API**: Charts defined with JSX components
+  - **React-First**: Built specifically for React, not a wrapper
+  - **Responsive**: Automatic responsive container handling
+  - **Customizable**: Full control over colors, tooltips, and legends
+  - **Lightweight**: No heavy dependencies like D3.js
+  
+  **Used For**:
+  - Language distribution donut chart in `LanguageChart.jsx`
+  
+  **Example Usage**:
+  ```jsx
+  import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+  
+  export function LanguageChart({ data }) {
+    return (
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={55}
+            outerRadius={85}
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {data.map((entry, i) => (
+              <Cell key={entry.name} fill={entry.color} stroke="none" />
+            ))}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+        </PieChart>
+      </ResponsiveContainer>
+    )
+  }
+  ```
+  
+  **Components Used**:
+  - `<ResponsiveContainer>` → Auto-sizing wrapper
+  - `<PieChart>` → Pie/donut chart container
+  - `<Pie>` → Pie slice renderer
+  - `<Cell>` → Individual slice customization
+  - `<Tooltip>` → Interactive hover tooltips
+  
+  <Tip>
+    Setting `innerRadius` creates a donut chart instead of a full pie chart.
+  </Tip>
+</Accordion>
+
+---
+
+### Icons
+
+<Accordion title="lucide-react ^0.263.1" icon="icons">
+  **Purpose**: Beautiful, consistent icon library
+  
+  **Why Lucide?**
+  - **Tree-Shakeable**: Only imports icons actually used
+  - **Consistent Design**: All icons share the same 24x24 grid and stroke width
+  - **Customizable**: Size, color, and stroke width via props
+  - **No Build Step**: Pure SVG components
+  - **Active Maintenance**: Regular updates with new icons
+  
+  **Icons Used**:
+  | Icon | Component | Purpose |
+  |------|-----------|----------|
+  | `Star` | RepoList | Star count display |
+  | `GitFork` | RepoList | Fork count display |
+  | `Clock` | RepoList | Last updated time |
+  | `Filter` | RepoList | Filter control icon |
+  | `ChevronLeft` | RepoList | Previous page button |
+  | `ChevronRight` | RepoList | Next page button |
+  | `Sun` | Header | Light theme icon |
+  | `Moon` | Header | Dark theme icon |
+  | `Key` | Header | Token modal trigger |
+  | `X` | ErrorBanner, CommitPanel | Close button |
+  | `Eye` | Various | Visibility/watchers |
+  
+  **Example Usage**:
+  ```jsx
+  import { Star, GitFork, Clock } from 'lucide-react'
+  
+  export function RepoCard({ repo }) {
+    return (
+      <div>
+        <span><Star size={12} /> {repo.stars}</span>
+        <span><GitFork size={12} /> {repo.forks}</span>
+        <span><Clock size={12} /> {timeAgo(repo.updated_at)}</span>
+      </div>
+    )
+  }
+  ```
+  
+  **Props**:
+  - `size` → Icon dimensions (number in pixels)
+  - `color` → Stroke color (inherits `currentColor` by default)
+  - `strokeWidth` → Line thickness (default: 2)
+  - `className` → CSS class for styling
+</Accordion>
+
+---
+
+## Development Dependencies
+
+### Build Tool
+
+<Accordion title="vite ^5.0.8" icon="bolt">
+  **Purpose**: Next-generation frontend build tool
+  
+  **Why Vite?**
+  - **Instant Server Start**: No bundling in dev mode → server starts in milliseconds
+  - **Lightning Fast HMR**: Hot Module Replacement updates in under 50ms
+  - **Optimized Builds**: Rollup-based production builds with code splitting
+  - **Native ES Modules**: Leverages browser's native module system
+  - **Out-of-the-Box**: Minimal configuration required
+  
+  **Key Features**:
+  
+  <CardGroup cols={2}>
+    <Card title="Dev Server" icon="server">
+      - Instant cold start
+      - Native ESM-based
+      - Fast HMR via WebSocket
+      - Pre-bundled dependencies
+    </Card>
+    <Card title="Build" icon="hammer">
+      - Rollup bundling
+      - Code splitting
+      - CSS extraction
+      - Asset optimization
+    </Card>
+  </CardGroup>
+  
+  **Configuration** (`vite.config.js`):
+  ```javascript
+  import { defineConfig } from 'vite'
+  import react from '@vitejs/plugin-react'
+  
+  export default defineConfig({
+    plugins: [react()],
+    base: '/github-dashboard/',
+  })
+  ```
+  
+  **Plugins Used**:
+  - `@vitejs/plugin-react` → React Fast Refresh, JSX transformation
+  
+  **Commands**:
+  - `vite` → Start dev server (npm run dev)
+  - `vite build` → Production build (npm run build)
+  - `vite preview` → Preview production build locally
+  
+  <Info>
+    Vite is 10-100x faster than traditional bundlers like Webpack in development mode.
+  </Info>
+</Accordion>
+
+<Accordion title="@vitejs/plugin-react ^4.2.1" icon="react">
+  **Purpose**: Official Vite plugin for React support
+  
+  **Features**:
+  - **React Fast Refresh**: Preserves component state during HMR
+  - **JSX Transformation**: Converts JSX to JavaScript
+  - **Automatic JSX Runtime**: Uses React 17+ automatic JSX runtime
+  
+  **No Manual React Imports Needed**:
+  ```jsx
+  // Old way (React 16)
+  import React from 'react'
+  export function Component() { ... }
+  
+  // New way (React 17+)
+  export function Component() { ... }  // ✅ No import needed!
+  ```
+</Accordion>
+
+---
+
+### TypeScript Support
+
+<Accordion title="@types/react ^18.2.43 & @types/react-dom ^18.2.17" icon="code">
+  **Purpose**: TypeScript type definitions for React
+  
+  **Why Include if Not Using TypeScript?**
+  - Enables IntelliSense in VS Code even for JavaScript files
+  - Provides autocomplete for React props and hooks
+  - Allows gradual migration to TypeScript if desired
+  
+  **Benefits**:
+  - Hover over React components → see prop types
+  - Autocomplete for `useState`, `useEffect`, etc.
+  - Better error messages in editors
+  
+  <Tip>
+    Even in pure JavaScript projects, type definitions improve developer experience significantly.
+  </Tip>
+</Accordion>
+
+---
+
+### Deployment
+
+<Accordion title="gh-pages ^6.1.1" icon="upload">
+  **Purpose**: Deploy built files to GitHub Pages
+  
+  **How It Works**:
+  1. Builds application to `/dist` folder
+  2. Creates `gh-pages` branch (if not exists)
+  3. Pushes `/dist` contents to `gh-pages` branch
+  4. GitHub Pages serves from that branch
+  
+  **Usage**:
+  ```bash
+  npm run deploy
+  # Internally runs: npm run build && gh-pages -d dist
+  ```
+  
+  **Configuration** (in `package.json`):
+  ```json
+  {
+    "homepage": "https://David-Andino.github.io/github-dashboard",
+    "scripts": {
+      "deploy": "npm run build && gh-pages -d dist"
+    }
+  }
+  ```
+  
+  <Warning>
+    The `base` path in `vite.config.js` must match the repository name in the `homepage` URL.
+  </Warning>
+</Accordion>
+
+---
+
+## External APIs
+
+### GitHub REST API v3
+
+<Accordion title="GitHub REST API" icon="github">
+  **Purpose**: Fetch user, repository, and commit data
+  
+  **Base URL**: `https://api.github.com`
+  
+  **Authentication**:
+  - **Unauthenticated**: 60 requests/hour per IP
+  - **With Personal Access Token**: 5,000 requests/hour
+  
+  **Endpoints Used**:
+  
+  | Method | Endpoint | Purpose | Rate Cost |
+  |--------|----------|---------|------------|
+  | GET | `/users/:username` | User profile | 1 request |
+  | GET | `/users/:username/repos` | User repositories | 1 request |
+  | GET | `/repos/:owner/:repo/commits` | Repository commits | 1 request |
+  | GET | `/repos/:owner/:repo/languages` | Language breakdown | 1 request |
+  
+  **Request Headers**:
+  ```javascript
+  {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': `Bearer ${token}`  // Optional but recommended
+  }
+  ```
+  
+  **Response Headers** (Rate Limit):
+  ```javascript
+  x-ratelimit-limit: 5000        // Total limit
+  x-ratelimit-remaining: 4987    // Requests left
+  x-ratelimit-reset: 1738560000  // Unix timestamp when resets
+  ```
+  
+  **Example Request**:
+  ```javascript
+  const response = await fetch('https://api.github.com/users/torvalds', {
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': 'Bearer ghp_xxxxxxxxxxxx'
+    }
+  })
+  const user = await response.json()
+  ```
+  
+  <Info>
+    GitScope extracts rate limit info from response headers and displays it in the Header component.
+  </Info>
+</Accordion>
+
+---
+
+## CSS Technologies
+
+### CSS Modules
+
+<Accordion title="CSS Modules" icon="file-code">
+  **Purpose**: Scoped CSS for components
+  
+  **How It Works**:
+  - Vite automatically processes `.module.css` files
+  - Class names are hashed to ensure uniqueness
+  - Imported as JavaScript objects
+  
+  **Example**:
+  
+  **Input** (`Header.module.css`):
+  ```css
+  .header {
+    background: var(--bg-card);
+    padding: 1rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+    color: var(--accent);
+  }
+  ```
+  
+  **Import** (`Header.jsx`):
+  ```jsx
+  import styles from './Header.module.css'
+  
+  export function Header() {
+    return (
+      <header className={styles.header}>
+        <h1 className={styles.title}>GitScope</h1>
+      </header>
+    )
+  }
+  ```
+  
+  **Output HTML**:
+  ```html
+  <header class="Header_header__a3f4e">
+    <h1 class="Header_title__b7c9d">GitScope</h1>
+  </header>
+  ```
+  
+  **Benefits**:
+  - ✅ No global namespace pollution
+  - ✅ Automatic class name deduplication
+  - ✅ Tree-shaking of unused styles
+  - ✅ Colocation with components
+</Accordion>
+
+### CSS Variables (Custom Properties)
+
+<Accordion title="CSS Variables" icon="palette">
+  **Purpose**: Centralized theming system
+  
+  **Definition** (`index.css`):
+  ```css
+  :root {
+    --bg: #f6f8fa;
+    --bg-card: #ffffff;
+    --text: #1a2332;
+    --accent: #2563eb;
+    --border: #e1e7ef;
+  }
+  
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --bg-card: #161b22;
+    --text: #e6edf3;
+    --accent: #58a6ff;
+    --border: #30363d;
+  }
+  ```
+  
+  **Usage in Components**:
+  ```css
+  .card {
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  ```
+  
+  **Theme Switching**:
+  ```javascript
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', newTheme)
+    localStorage.setItem('theme', newTheme)
+  }
+  ```
+  
+  **Advantages**:
+  - ✅ Instant theme switching (no re-render needed)
+  - ✅ Single source of truth for colors
+  - ✅ Easy to add new themes
+  - ✅ Native browser support (no preprocessor)
+</Accordion>
+
+---
+
+## No State Management Library?
+
+<AccordionGroup>
+  <Accordion title="Why No Redux/Zustand/Context?" icon="question">
+    **GitScope deliberately avoids external state management libraries.**
+    
+    **Reasons**:
+    
+    1. **Simple State**: Application state is not deeply nested or complex
+    2. **Single Root**: All state lives in `App.jsx`, passed down as props
+    3. **No Prop Drilling**: Component tree is shallow (max 2-3 levels)
+    4. **Performance**: React 18's automatic batching handles updates efficiently
+    5. **Bundle Size**: Avoiding external libraries keeps bundle lean
+    
+    **State Management Strategy**:
+    - `App.jsx` → Single source of truth
+    - Props → Data flows down
+    - Callbacks → Events flow up
+    - Custom hooks → Reusable logic (`useGitHub`)
+    
+    <Info>
+      For small to medium applications, React's built-in state is often sufficient. Only add state management libraries when you encounter actual pain points, not preemptively.
+    </Info>
+  </Accordion>
+
+  <Accordion title="When Would We Add a State Library?" icon="sitemap">
+    **Indicators that a state library might be needed**:
+    
+    - ❌ Prop drilling exceeds 3-4 levels
+    - ❌ Multiple unrelated components need same state
+    - ❌ State updates cause performance issues
+    - ❌ Complex state synchronization between features
+    - ❌ Need for time-travel debugging
+    
+    **None of these apply to GitScope** because:
+    - ✅ Shallow component tree
+    - ✅ Clear parent-child relationships
+    - ✅ Fast re-renders due to React 18 batching
+    - ✅ Simple, linear data flow
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Runtime Environment
+
+### Browser Requirements
+
+<CardGroup cols={2}>
+  <Card title="Modern Browsers" icon="globe">
+    Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+  </Card>
+  <Card title="ES Modules" icon="cube">
+    Native ESM support required for dev mode
+  </Card>
+  <Card title="Fetch API" icon="download">
+    Native `fetch()` for API requests (no polyfill)
+  </Card>
+  <Card title="CSS Variables" icon="palette">
+    CSS Custom Properties for theming
+  </Card>
+</CardGroup>
+
+<Note>
+  GitScope does not support Internet Explorer or older browsers. The build targets modern evergreen browsers only.
+</Note>
+
+---
+
+## Package Management
+
+### npm Lockfile
+
+**File**: `package-lock.json`
+
+**Purpose**: Ensures deterministic dependency resolution
+
+**Key Benefits**:
+- ✅ Exact versions locked across all environments
+- ✅ Faster `npm ci` in CI/CD (skips resolution)
+- ✅ Protects against breaking changes in transitive dependencies
+
+**Commands**:
+```bash
+npm install       # Install dependencies (updates lock if needed)
+npm ci            # Clean install from lock (faster, used in CI)
+npm update        # Update dependencies to latest matching semver
+```
+
+<Warning>
+  Always commit `package-lock.json` to version control. Never add it to `.gitignore`.
+</Warning>
+
+---
+
+## Dependency Decision Matrix
+
+| Need | Considered | Chosen | Reason |
+|------|-----------|--------|--------|
+| **Charting** | Chart.js, Victory, Recharts | **Recharts** | React-first, composable API, lightweight |
+| **Icons** | React Icons, Heroicons, Lucide | **Lucide** | Tree-shakeable, consistent design, active maintenance |
+| **Build Tool** | Webpack, Parcel, Vite | **Vite** | Fastest dev experience, minimal config |
+| **State Management** | Redux, Zustand, Context, None | **None** | State is simple, no need for external library |
+| **Routing** | React Router, Tanstack Router, None | **None** | Single-page app, no navigation needed |
+| **HTTP Client** | Axios, ky, fetch | **fetch** | Native API, no additional bundle size |
+| **CSS** | Styled-Components, Tailwind, CSS Modules | **CSS Modules** | Scoped styles, no runtime cost, colocated |
+
+---
+
+## Development Scripts
+
+### Available Commands
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist"
+  }
+}
+```
+
+<AccordionGroup>
+  <Accordion title="npm run dev" icon="play">
+    **Purpose**: Start development server
+    
+    - Launches Vite dev server on `http://localhost:5173`
+    - Hot Module Replacement (HMR) enabled
+    - No bundling (serves native ES modules)
+    - Instant server start (under 100ms)
+    
+    **When to Use**: During active development
+  </Accordion>
+
+  <Accordion title="npm run build" icon="hammer">
+    **Purpose**: Create production build
+    
+    - Bundles all code with Rollup
+    - Minifies JavaScript and CSS
+    - Generates content-hashed filenames
+    - Outputs to `/dist` folder
+    - Optimizes assets (images, fonts, etc.)
+    
+    **When to Use**: Before deployment or testing production build
+  </Accordion>
+
+  <Accordion title="npm run preview" icon="eye">
+    **Purpose**: Preview production build locally
+    
+    - Serves the `/dist` folder
+    - Runs on `http://localhost:4173`
+    - Simulates production environment
+    - No HMR (requires rebuild for changes)
+    
+    **When to Use**: To verify build before deployment
+  </Accordion>
+
+  <Accordion title="npm run deploy" icon="rocket">
+    **Purpose**: Build and deploy to GitHub Pages
+    
+    - Runs `npm run build` first
+    - Pushes `/dist` to `gh-pages` branch
+    - GitHub Pages automatically serves new version
+    
+    **When to Use**: To publish changes to live site
+    
+    <Warning>
+      Requires GitHub Pages to be enabled in repository settings with source set to `gh-pages` branch.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Technology Choices Summary
+
+<CardGroup cols={2}>
+  <Card title="Modern Stack" icon="sparkles">
+    React 18 + Vite 5 for best-in-class DX
+  </Card>
+  <Card title="Minimal Dependencies" icon="feather">
+    Only 4 production dependencies
+  </Card>
+  <Card title="Native APIs" icon="code">
+    Uses fetch, CSS variables, ES modules
+  </Card>
+  <Card title="Fast Builds" icon="rocket">
+    Vite builds in seconds, not minutes
+  </Card>
+</CardGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Learn about system architecture and design patterns
+  </Card>
+  <Card title="Project Structure" icon="folder-tree" href="/development/project-structure">
+    Explore the file and folder organization
+  </Card>
+</CardGroup>

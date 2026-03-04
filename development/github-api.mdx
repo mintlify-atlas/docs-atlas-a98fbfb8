@@ -1,0 +1,250 @@
+---
+title: 'GitHub API Integration'
+description: 'Complete guide to GitHub REST API integration in GitScope'
+---
+
+## Overview
+
+GitScope integrates with the GitHub REST API v3 to fetch user profiles, repositories, commits, and language statistics. All API communication is handled through the `useGitHub` custom hook.
+
+## Base Configuration
+
+The API integration uses the official GitHub REST API endpoint:
+
+```javascript
+const BASE = 'https://api.github.com'
+```
+
+## API Endpoints
+
+GitScope uses the following GitHub REST API endpoints:
+
+| Function | Endpoint | Purpose |
+|----------|----------|----------|
+| `getUser` | `GET /users/:username` | Fetch user profile data |
+| `getRepos` | `GET /users/:username/repos` | List user repositories |
+| `getCommits` | `GET /repos/:owner/:repo/commits` | Get repository commits |
+| `getLanguages` | `GET /repos/:owner/:repo/languages` | Get repository languages |
+
+## Authentication
+
+### Bearer Token
+
+The API supports both authenticated and unauthenticated requests. Authentication is handled via Bearer token in the Authorization header:
+
+```javascript
+const headers = () => {
+  const h = { 'Accept': 'application/vnd.github+json' }
+  if (token) h['Authorization'] = `Bearer ${token}`
+  return h
+}
+```
+
+<Note>
+  Without authentication, the API rate limit is **60 requests/hour**. With a Personal Access Token, it increases to **5,000 requests/hour**.
+</Note>
+
+### Required Headers
+
+All requests include the GitHub API version header:
+
+```javascript
+'Accept': 'application/vnd.github+json'
+```
+
+## Request Pattern
+
+The hook implements a centralized request function that handles URL construction, query parameters, and error handling:
+
+```javascript
+const request = async (path, params = {}) => {
+  const url = new URL(`${BASE}${path}`)
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+  
+  const res = await fetch(url.toString(), { headers: headers() })
+  
+  // Rate limit extraction (see below)
+  // Error handling (see error-handling.mdx)
+  
+  return res.json()
+}
+```
+
+### Query Parameters
+
+Query parameters are dynamically added to the URL:
+
+<CodeGroup>
+```javascript Repositories with pagination
+getRepos('username', 1, 30)
+// GET /users/username/repos?page=1&per_page=30&sort=updated&direction=desc
+```
+
+```javascript Commits with limit
+getCommits('owner', 'repo', 10)
+// GET /repos/owner/repo/commits?per_page=10
+```
+
+```javascript Languages (no params)
+getLanguages('owner', 'repo')
+// GET /repos/owner/repo/languages
+```
+</CodeGroup>
+
+## Rate Limit Tracking
+
+### Header Extraction
+
+GitHub includes rate limit information in every API response header. The hook extracts these values:
+
+```javascript
+const remaining = res.headers.get('x-ratelimit-remaining')
+const limit = res.headers.get('x-ratelimit-limit')
+const reset = res.headers.get('x-ratelimit-reset')
+
+if (remaining !== null) {
+  setRateLimit({ 
+    remaining: +remaining, 
+    limit: +limit, 
+    reset: +reset * 1000  // Convert to milliseconds
+  })
+}
+```
+
+### Rate Limit Object
+
+The rate limit state exposes three properties:
+
+<ParamField path="rateLimit.remaining" type="number">
+  Number of requests remaining in the current window
+</ParamField>
+
+<ParamField path="rateLimit.limit" type="number">
+  Total request limit per hour (60 or 5000)
+</ParamField>
+
+<ParamField path="rateLimit.reset" type="number">
+  Unix timestamp (in milliseconds) when the rate limit resets
+</ParamField>
+
+### Visual Indicator
+
+The Header component displays a color-coded rate limit indicator:
+
+- 🟢 **Green** → More than 50% available
+- 🟡 **Yellow** → Between 20% and 50%
+- 🔴 **Red** → Less than 20%
+
+## Response Format
+
+### User Profile Response
+
+```json
+{
+  "login": "username",
+  "avatar_url": "https://avatars.githubusercontent.com/u/123456",
+  "name": "User Name",
+  "company": "@company",
+  "blog": "https://example.com",
+  "location": "City, Country",
+  "bio": "Bio text",
+  "twitter_username": "handle",
+  "public_repos": 42,
+  "public_gists": 10,
+  "followers": 100,
+  "following": 50
+}
+```
+
+### Repository Response
+
+```json
+[
+  {
+    "id": 123456789,
+    "name": "repo-name",
+    "full_name": "owner/repo-name",
+    "description": "Repository description",
+    "html_url": "https://github.com/owner/repo-name",
+    "stargazers_count": 42,
+    "forks_count": 10,
+    "language": "JavaScript",
+    "updated_at": "2026-03-04T12:00:00Z",
+    "size": 1024,
+    "license": { "name": "MIT License" },
+    "open_issues_count": 5
+  }
+]
+```
+
+### Commits Response
+
+```json
+[
+  {
+    "sha": "abc123def456",
+    "commit": {
+      "author": {
+        "name": "Author Name",
+        "email": "author@example.com",
+        "date": "2026-03-04T12:00:00Z"
+      },
+      "message": "Commit message"
+    },
+    "author": {
+      "login": "username",
+      "avatar_url": "https://avatars.githubusercontent.com/u/123456"
+    }
+  }
+]
+```
+
+### Languages Response
+
+```json
+{
+  "JavaScript": 12345,
+  "CSS": 5678,
+  "HTML": 1234
+}
+```
+
+<Note>
+  The values represent bytes of code, not file count or percentage.
+</Note>
+
+## API Consumption
+
+Typical request consumption per user search:
+
+- **1 request** → User profile (`getUser`)
+- **1 request per page** → Repositories (`getRepos`)
+- **1 request per repo** → Commits when expanded (`getCommits`)
+- **Up to 12 parallel requests** → Language statistics for chart (`getLanguages`)
+
+<Warning>
+  Without a token, analyzing a single user can consume 15-20 requests (profile + repos + languages), leaving only 40 requests remaining in the hour.
+</Warning>
+
+## Token Storage
+
+Personal Access Tokens are stored in browser localStorage:
+
+```javascript
+const saveToken = (t) => {
+  setToken(t)
+  if (t) localStorage.setItem('gh_token', t)
+  else localStorage.removeItem('gh_token')
+}
+```
+
+<Warning>
+  Tokens are stored client-side only. Never commit tokens to version control or expose them in client-side code.
+</Warning>
+
+## API Documentation
+
+For complete GitHub REST API documentation, see:
+- [GitHub REST API Reference](https://docs.github.com/en/rest)
+- [Rate Limiting](https://docs.github.com/en/rest/rate-limit)
+- [Authentication](https://docs.github.com/en/rest/authentication)
